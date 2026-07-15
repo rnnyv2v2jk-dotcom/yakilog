@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>焼きログ 🌞 関東 日焼けスポットマップ</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sand:    #f5e6c8;
+      --ocean:   #2a7fba;
+      --sun:     #f7b731;
+      --coral:   #ff6b47;
+      --white:   #ffffff;
+      --dark:    #1a1a2e;
+      --muted:   #7a7a8a;
+      --surface: rgba(255,255,255,0.93);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      background: var(--sand);
+      color: var(--dark);
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: var(--white);
+      padding: 0 20px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(255,255,255,0.03) 40px,rgba(255,255,255,0.03) 41px);
+      pointer-events: none;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; z-index: 1; }
+    .logo-badge {
+      background: var(--sun);
+      color: var(--dark);
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0; font-weight: 900;
+    }
+    .header-text h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px; letter-spacing: 2px; line-height: 1; color: var(--sun);
+    }
+    .header-text .sub {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,0.55); line-height: 1;
+    }
+    /* ── PREF BADGE ── */
+    .pref-badge {
+      display: inline-block; font-size: 9px; font-weight: 700;
+      padding: 1px 6px; border-radius: 10px; margin-left: 4px;
+      vertical-align: middle; letter-spacing: 0.5px;
+    }
+    .pref-tokyo    { background:#ff6b47; color:#fff; }
+    .pref-kanagawa { background:#2a7fba; color:#fff; }
+    .pref-saitama  { background:#3a7d44; color:#fff; }
+    .pref-chiba    { background:#f7b731; color:#1a1a2e; }
+    #add-btn {
+      background: var(--coral); color: var(--white);
+      border: none; border-radius: 8px; padding: 8px 16px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      letter-spacing: 0.5px; z-index: 1; transition: background 0.15s;
+    }
+    #add-btn:hover { background: #e85530; }
+
+    .hero-strip {
+      background: linear-gradient(90deg, #ff6b47, #f7b731, #2a7fba);
+      height: 5px; flex-shrink: 0;
+    }
+
+    /* ── MAP ── */
+    #map { flex: 1; z-index: 0; }
+
+    /* ── FILTER BAR ── */
+    #filter-bar {
+      position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 8px; z-index: 1000;
+      background: var(--surface); border-radius: 40px; padding: 6px 10px;
+      border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(8px);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    }
+    .filter-btn {
+      border: none; border-radius: 20px; padding: 5px 14px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      background: transparent; color: var(--muted); transition: all 0.15s;
+    }
+    .filter-btn.active { color: var(--white); }
+    .filter-btn[data-filter="all"].active     { background: var(--dark); }
+    .filter-btn[data-filter="outdoor"].active { background: var(--coral); }
+    .filter-btn[data-filter="salon"].active   { background: #7c5cd8; }
+
+    /* ── SPOT COUNT ── */
+    #spot-count {
+      position: absolute; bottom: 32px; right: 12px;
+      background: var(--surface); border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 20px; padding: 5px 14px;
+      font-size: 12px; font-weight: 600; z-index: 1000;
+      color: var(--dark); backdrop-filter: blur(8px);
+    }
+
+    /* ── LEGEND ── */
+    #legend {
+      position: absolute; bottom: 70px; left: 12px;
+      background: var(--surface); border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 10px; padding: 10px 14px;
+      font-size: 12px; z-index: 1000; line-height: 2;
+      backdrop-filter: blur(8px); box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .legend-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: 13px;
+      letter-spacing: 1px; color: var(--dark); margin-bottom: 2px;
+    }
+    #legend .legend-item { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .dot-outdoor { background: var(--coral); }
+    .dot-salon   { background: #7c5cd8; }
+    .dot-user    { background: var(--ocean); }
+
+    /* ── MODAL ── */
+    #modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(15,20,40,0.6); z-index: 2000;
+      align-items: flex-end; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    #modal-overlay.open { display: flex; }
+    #modal {
+      background: var(--white); border-radius: 20px 20px 0 0;
+      padding: 0; width: 100%; max-width: 600px;
+      max-height: 92dvh; overflow-y: auto;
+    }
+    .modal-header {
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      padding: 20px 20px 16px; border-radius: 20px 20px 0 0;
+      position: sticky; top: 0; z-index: 1;
+    }
+    .modal-header h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px; letter-spacing: 2px; color: var(--sun);
+    }
+    .modal-header p {
+      font-size: 11px; color: rgba(255,255,255,0.5);
+      letter-spacing: 1px; text-transform: uppercase; margin-top: 2px;
+    }
+    .modal-body { padding: 20px; }
+    .modal-hint {
+      font-size: 12px; color: var(--muted); margin-bottom: 18px;
+      background: #f7f8fa; border-radius: 8px; padding: 10px 12px;
+      border-left: 3px solid var(--coral); line-height: 1.6;
+    }
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-size: 11px; font-weight: 700;
+      margin-bottom: 6px; color: var(--muted);
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px;
+      padding: 10px 12px; font-size: 14px; font-family: 'Inter', sans-serif;
+      background: #f9fafb; transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none; border-color: var(--coral); background: #fff;
+    }
+    .field textarea { resize: vertical; min-height: 72px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ── PHOTO UPLOAD ── */
+    .photo-upload-area {
+      border: 2px dashed #e5e7eb; border-radius: 10px;
+      padding: 20px; text-align: center; cursor: pointer;
+      transition: all 0.15s; background: #f9fafb; position: relative;
+    }
+    .photo-upload-area:hover { border-color: var(--coral); background: #fff5f3; }
+    .photo-upload-area input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .photo-upload-area .upload-icon { font-size: 28px; margin-bottom: 6px; }
+    .photo-upload-area .upload-text { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .photo-upload-area .upload-sub  { font-size: 11px; color: #bbb; margin-top: 4px; }
+    #photo-preview {
+      width: 100%; height: 140px; object-fit: cover;
+      border-radius: 8px; display: none; margin-top: 10px;
+    }
+
+    .modal-actions { display: flex; gap: 10px; padding: 0 20px 24px; }
+    .btn-cancel {
+      flex: 1; background: #f3f4f6; border: none;
+      border-radius: 10px; padding: 12px; font-size: 14px;
+      font-weight: 600; cursor: pointer; color: var(--muted);
+    }
+    .btn-submit {
+      flex: 2; background: linear-gradient(135deg, var(--coral), #f7b731);
+      color: var(--white); border: none; border-radius: 10px; padding: 12px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: 1.5px;
+    }
+
+    /* ── POPUP OVERRIDES ── */
+    .leaflet-popup-content-wrapper {
+      border-radius: 14px !important; padding: 0 !important;
+      overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,0.18) !important;
+      min-width: 260px !important;
+    }
+    .leaflet-popup-content { margin: 0 !important; width: auto !important; }
+    .leaflet-popup-tip { background: white !important; }
+
+    footer {
+      text-align: center; font-size: 10px; color: #bbb;
+      padding: 5px; border-top: 1px solid #e5e7eb;
+      background: var(--white); flex-shrink: 0; letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-badge">☀</div>
+    <div class="header-text">
+      <h1>焼きログ</h1>
+      <span class="sub">Tokyo Tan Spots — Find Your Beach</span>
+    </div>
+  </div>
+  <button id="add-btn">＋ ADD SPOT</button>
+</header>
+<div class="hero-strip"></div>
+
+<div id="map"></div>
+
+<div id="filter-bar">
+  <button class="filter-btn active" data-filter="all">🌐 ALL</button>
+  <button class="filter-btn" data-filter="outdoor">☀️ 屋外</button>
+  <button class="filter-btn" data-filter="salon">💜 日サロ</button>
+  <button class="filter-btn" data-filter="tokyo">東京</button>
+  <button class="filter-btn" data-filter="kanagawa">神奈川</button>
+  <button class="filter-btn" data-filter="saitama">埼玉</button>
+  <button class="filter-btn" data-filter="chiba">千葉</button>
+</div>
+
+<div id="legend">
+  <div class="legend-title">LEGEND</div>
+  <div class="legend-item"><div class="dot dot-outdoor"></div>屋外スポット</div>
+  <div class="legend-item"><div class="dot dot-salon"></div>日サロ</div>
+  <div class="legend-item"><div class="dot dot-user"></div>投稿スポット</div>
+</div>
+
+<div id="spot-count"></div>
+
+<!-- Modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <div class="modal-header">
+      <h2>ADD YOUR SPOT</h2>
+      <p>Share your favorite tan spot with the crew</p>
+    </div>
+    <div class="modal-body">
+      <div class="modal-hint">
+        💡 地図をクリックすると緯度・経度が自動入力されます。Googleマップで場所を右クリック→「この場所について」でも確認できます。
+      </div>
+      <div class="field">
+        <label>Spot Name *</label>
+        <input type="text" id="f-name" placeholder="例: 代々木公園 芝生エリア" />
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <select id="f-type">
+          <option value="outdoor">☀️ 屋外スポット（上裸OK）</option>
+          <option value="salon">💜 日サロ・タンニングサロン</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>緯度 (Lat) *</label>
+          <input type="number" id="f-lat" step="0.0001" placeholder="35.6762" />
+        </div>
+        <div class="field">
+          <label>経度 (Lng) *</label>
+          <input type="number" id="f-lng" step="0.0001" placeholder="139.6503" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Vibe / Comment</label>
+        <textarea id="f-memo" placeholder="例: 芝生が広くて最高。夏の午後が狙い目。"></textarea>
+      </div>
+      <div class="field">
+        <label>📸 Photo</label>
+        <div class="photo-upload-area" id="upload-area">
+          <input type="file" id="f-photo" accept="image/*" />
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">写真をタップして追加</div>
+          <div class="upload-sub">JPG / PNG / HEIC · 最大5MB</div>
+        </div>
+        <img id="photo-preview" src="" alt="preview" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="cancel-btn">CANCEL</button>
+      <button class="btn-submit" id="submit-btn">DROP THE PIN 📍</button>
+    </div>
+  </div>
+</div>
+
+<footer>焼きログ &nbsp;·&nbsp; Made with IBM Bob</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─────────────────────────────────────────────
+//  SPOT DATA
+// ─────────────────────────────────────────────
+const PRESET_SPOTS = [
+
+  // ════════════════════════════════
+  //  🗼 東京 屋外スポット
+  // ════════════════════════════════
+  {
+    id:"t1", name:"代々木公園 芝生広場", type:"outdoor", pref:"tokyo",
+    lat:35.671614, lng:139.694688, area:"渋谷・原宿 / 東京", rating:5,
+    memo:"都内最大級の芝生エリア。開放的で上裸日焼け勢も多数。週末は賑わうが場所取りしやすい。",
+    tips:"午前10時〜14時がゴールデンタイム。日焼け止めと水分必須。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/7/7b/Shinjuku_Gyoen_National_Garden_and_NTT_DoCoMo_Yoyogi_Building%2C_Tokyo%2C_Japan.jpg",
+    preset:true
+  },
+  {
+    id:"t2", name:"お台場海浜公園 砂浜", type:"outdoor", pref:"tokyo",
+    lat:35.627522, lng:139.77475, area:"お台場 / 東京", rating:5,
+    memo:"東京湾を望む砂浜。夏はビーチ気分で本格日焼けが楽しめる都内屈指のスポット。砂浜で上裸OK。",
+    tips:"潮風あり。塩分対策も忘れずに。夕方は観覧車バックに映える。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/3/38/Odaiba_beach_at_dusk.jpg",
+    preset:true
+  },
+  {
+    id:"t3", name:"駒沢オリンピック公園 芝生広場", type:"outdoor", pref:"tokyo",
+    lat:35.63569, lng:139.67335, area:"駒沢 / 東京", rating:4,
+    memo:"広大な芝生。ランナー・スポーツ勢が多く開放的な雰囲気。上裸で日光浴している人も見かける。",
+    tips:"木陰も多いので半日焼きにも◎。駐車場あり。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/3/3c/Komazawa_olympic_park.jpg",
+    preset:true
+  },
+  {
+    id:"t4", name:"昭和記念公園（立川）", type:"outdoor", pref:"tokyo",
+    lat:35.70378, lng:139.40722, area:"立川 / 東京", rating:5,
+    memo:"都内最大級の国営公園。超広大な芝生で誰にも邪魔されずに焼ける。本気の焼き活勢に激推し。",
+    tips:"入場料あり（450円）。一日じっくり焼くなら最高の環境。早朝入園がオススメ。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/a/ac/Showa_Kinen_Park_%40_Tachikawa_%2810605769005%29.jpg",
+    preset:true
+  },
+  {
+    id:"t5", name:"葛西臨海公園 海辺エリア", type:"outdoor", pref:"tokyo",
+    lat:35.63236, lng:139.86884, area:"葛西 / 東京", rating:4,
+    memo:"東京東部の海浜公園。砂浜と芝生が広がり開放感抜群。BBQエリアもあり一日過ごせる。",
+    tips:"都心からアクセス良好。夏場は混むので平日狙いが吉。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/f/f2/Kasai-Rinkai-Park_View_Plaza_Rest_House.jpg",
+    preset:true
+  },
+  {
+    id:"t6", name:"多摩川河川敷（二子玉川）", type:"outdoor", pref:"tokyo",
+    lat:35.61273, lng:139.62187, area:"二子玉川 / 東京", rating:4,
+    memo:"二子玉川駅すぐの河川敷。おしゃれな雰囲気で焼き活勢も多い都内西部の定番スポット。",
+    tips:"芝生・砂地どちらも選べる。週末はBBQ勢も多く賑やか。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/c/c5/Futako_tamagawa_river_2007_%281112853910%29.jpg",
+    preset:true
+  },
+  {
+    id:"t7", name:"江戸川河川敷（篠崎・小岩）", type:"outdoor", pref:"tokyo",
+    lat:35.70805, lng:139.88255, area:"小岩・篠崎 / 東京", rating:3,
+    memo:"広大な河川敷。人が少なく、のびのびと焼ける穴場。上裸でゴロゴロしている人も多い。",
+    tips:"日差しを遮るものが少ないため真夏は強烈。時間管理注意。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/5/50/Edogawa_river_rising_after_the_Typhoon_Hagibis_between_Katsushika_ohashi_bridge_and_Katsushika_bridge_20191013_075952.jpg",
+    preset:true
+  },
+  {
+    id:"t8", name:"荒川河川敷（北区・赤羽）", type:"outdoor", pref:"tokyo",
+    lat:35.77502, lng:139.72215, area:"赤羽・北区 / 東京", rating:3,
+    memo:"荒川沿いの広大な河川敷。スポーツ施設も多く日光浴スペースが豊富。穴場的な焼き活スポット。",
+    tips:"赤羽駅からアクセス良好。平日は特に空いていてのびのびできる。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/d/d8/Arakawa_River_%40_Akabane_%2814157007841%29.jpg",
+    preset:true
+  },
+  {
+    id:"t9", name:"夢の島公園 芝生エリア", type:"outdoor", pref:"tokyo",
+    lat:35.64982, lng:139.83004, area:"夢の島 / 東京", rating:3,
+    memo:"江東区の公園。芝生が広がり人も少なめ。上裸で日光浴できる隠れたスポット。",
+    tips:"BBQエリアも併設。マリーナ側のエリアは開放感が特に高い。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/a/a9/Yumenoshima_Tropical_Greenhouse_Dome.jpg",
+    preset:true
+  },
+  {
+    id:"t10", name:"砧公園 芝生広場", type:"outdoor", pref:"tokyo",
+    lat:35.62743, lng:139.62564, area:"砧・世田谷 / 東京", rating:4,
+    memo:"世田谷の広大な公園。芝生が美しく、日光浴目的の人が多い。緑の中でリラックスして焼ける。",
+    tips:"用賀駅から徒歩15分。美術館も隣接。売店あり。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/8/8b/Kinuta_Park_04.jpg",
+    preset:true
+  },
+  {
+    id:"t11", name:"東京港野鳥公園 芝生エリア", type:"outdoor", pref:"tokyo",
+    lat:35.5777, lng:139.7517, area:"大田区 / 東京", rating:3,
+    memo:"羽田空港近くの海沿い公園。開放的な芝生エリアで人も少なく、のびのびできる穴場。",
+    tips:"飛行機の離着陸を眺めながら焼けるユニークなロケーション。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/a/aa/Tokyo_Port_Wild_Bird_Park_%40_Ota_City_%2810354159685%29.jpg",
+    preset:true
+  },
+  {
+    id:"t12", name:"光が丘公園 芝生広場", type:"outdoor", pref:"tokyo",
+    lat:35.76204, lng:139.6532, area:"光が丘・練馬 / 東京", rating:4,
+    memo:"練馬区の広大な公園。芝生エリアが非常に広く、日光浴している人が多い。上裸勢にも寛容な雰囲気。",
+    tips:"光が丘駅から徒歩5分。売店・トイレ完備で長時間滞在可能。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/2/24/Nerima_Municipal_Hikarigaoka_Library_2024-04-29.jpg",
+    preset:true
+  },
+  {
+    id:"t13", name:"清澄庭園・木場公園周辺芝生", type:"outdoor", pref:"tokyo",
+    lat:35.6739, lng:139.80873, area:"木場・江東 / 東京", rating:3,
+    memo:"木場公園の広い芝生エリア。下町エリアの穴場スポット。人が少なく静かに焼ける。",
+    tips:"週末でも比較的空いている。近隣にカフェも充実。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/9/9e/Kiba_park.jpg",
+    preset:true
+  },
+  {
+    id:"t14", name:"井の頭恩賜公園 芝生エリア", type:"outdoor", pref:"tokyo",
+    lat:35.70021, lng:139.57526, area:"吉祥寺 / 東京", rating:4,
+    memo:"吉祥寺の人気公園。池周辺の芝生で日光浴する人が多く、オープンな雰囲気。",
+    tips:"週末は混むが広いので場所は確保しやすい。ボート乗り場近くがオススメ。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/0/08/Inokashira_park_spring.jpg",
+    preset:true
+  },
+  {
+    id:"t15", name:"城南島海浜公園 砂浜", type:"outdoor", pref:"tokyo",
+    lat:35.57008, lng:139.77382, area:"城南島・大田区 / 東京", rating:5,
+    memo:"羽田直下の砂浜。飛行機を見ながら本格的な砂浜日焼けができる都内屈指の穴場ビーチ。上裸OK。",
+    tips:"夏場は海水浴客でにぎわう。BBQ施設あり。飛行機の轟音がむしろ最高。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/3/35/Marine_Park_%40_Jonanjima_%40_Ota_City_%2810354217155%29.jpg",
+    preset:true
+  },
+
+  // ════════════════════════════════
+  //  🌊 神奈川 屋外スポット
+  // ════════════════════════════════
+  {
+    id:"k1", name:"鎌倉 由比ヶ浜海水浴場", type:"outdoor", pref:"kanagawa",
+    lat:35.31332, lng:139.54089, area:"鎌倉 / 神奈川", rating:5,
+    memo:"鎌倉を代表するビーチ。砂浜が広く本格的なビーチ日焼けが楽しめる。湘南文化の発祥地。上裸当然。",
+    tips:"夏季は海の家がオープン。ライフセーバー常駐で安心。早朝は空いていて最高。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/2/27/Kamakura_Yuigahama_beach_during_winter_with_strong_wind.jpg",
+    preset:true
+  },
+  {
+    id:"k2", name:"江の島 表浜（片瀬東浜）", type:"outdoor", pref:"kanagawa",
+    lat:35.30401, lng:139.48028, area:"江の島・藤沢 / 神奈川", rating:5,
+    memo:"湘南を代表するビーチ。広大な砂浜で上裸日焼け勢の聖地。サーファー・焼き勢が集結する。",
+    tips:"駐車場あり。夏は大混雑するが広いので十分スペースあり。海の家でシャワーも浴びられる。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/0/0b/Fujisawa_as_seen_from_Enoshima_Island_130809_7.jpg",
+    preset:true
+  },
+  {
+    id:"k3", name:"逗子海岸", type:"outdoor", pref:"kanagawa",
+    lat:35.29653, lng:139.57773, area:"逗子 / 神奈川", rating:5,
+    memo:"逗子の落ち着いたビーチ。江の島より人が少なく大人な雰囲気。上裸でゆっくり焼くのに最適。",
+    tips:"逗子駅から徒歩15分またはバス。海の家あり。葉山方面への散歩も◎。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/3/3e/Zushi_Kaigan_1930s.jpg",
+    preset:true
+  },
+  {
+    id:"k4", name:"葉山 一色海岸", type:"outdoor", pref:"kanagawa",
+    lat:35.27271, lng:139.58334, area:"葉山 / 神奈川", rating:4,
+    memo:"葉山の隠れた名ビーチ。透明度が高く、落ち着いた雰囲気。上流な焼き活勢に人気。",
+    tips:"駐車場が少ないので早めに到着を。シュノーケリングも楽しめる。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/8/87/Sunset_and_Mt.Fuji_from_Hayama_%E8%91%89%E5%B1%B1_beach_-_panoramio.jpg",
+    preset:true
+  },
+  {
+    id:"k5", name:"茅ヶ崎海岸（サザンビーチ）", type:"outdoor", pref:"kanagawa",
+    lat:35.31841, lng:139.40496, area:"茅ヶ崎 / 神奈川", rating:5,
+    memo:"サザンオールスターズの聖地。広大な砂浜で日焼け上裸勢の王道スポット。湘南最強クラス。",
+    tips:"サザンビーチちがさきは特に開放的。夏はフードブースも充実。茅ヶ崎駅から徒歩15分。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/c/c2/Southern_Beach_Chigasaki_Monument.jpg",
+    preset:true
+  },
+  {
+    id:"k6", name:"平塚海岸", type:"outdoor", pref:"kanagawa",
+    lat:35.33023, lng:139.34981, area:"平塚 / 神奈川", rating:4,
+    memo:"比較的すいている穴場ビーチ。広大な砂浜でのびのびと焼ける。観光地化されすぎていない素朴さが魅力。",
+    tips:"平塚駅からバスで15分。ファミリー層が多いが十分なスペースあり。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/e/e9/Sun_shining_sea_-_panoramio.jpg",
+    preset:true
+  },
+  {
+    id:"k7", name:"大磯海水浴場", type:"outdoor", pref:"kanagawa",
+    lat:35.30758, lng:139.31422, area:"大磯 / 神奈川", rating:4,
+    memo:"日本最古の海水浴場のひとつ。レトロな雰囲気と広い砂浜が魅力。焼き活の穴場。",
+    tips:"大磯駅から徒歩10分。海の家あり。人が少なめでゆったり過ごせる。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/e/e1/Oiso_beach_-_alt_-_Kanagawa_-_2023_July_9_various_15_00_36_446000.jpeg",
+    preset:true
+  },
+  {
+    id:"k8", name:"横浜・本牧海づり施設付近の芝生", type:"outdoor", pref:"kanagawa",
+    lat:35.42563, lng:139.66199, area:"本牧・横浜 / 神奈川", rating:3,
+    memo:"横浜南部の海沿い公園。芝生と海が広がるエリアで日光浴する地元民が多い穴場。",
+    tips:"本牧市民公園も隣接。平日は特に空いていてのびのびできる。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/7/75/Yokohama-Honmoku_Fishing_Pier_on_weekends.jpg",
+    preset:true
+  },
+  {
+    id:"k9", name:"三浦海岸", type:"outdoor", pref:"kanagawa",
+    lat:35.15208, lng:139.62157, area:"三浦 / 神奈川", rating:5,
+    memo:"三浦半島南端のビーチ。砂浜が広く透明度高し。都心から離れているため混みすぎず穴場感もある。",
+    tips:"京急「三浦海岸」駅から徒歩5分。夏でも比較的落ち着いている。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/d/d2/Miura_Beach_01.jpg",
+    preset:true
+  },
+
+  // ════════════════════════════════
+  //  🌿 埼玉 屋外スポット
+  // ════════════════════════════════
+  {
+    id:"sa1", name:"彩湖・道満グリーンパーク", type:"outdoor", pref:"saitama",
+    lat:35.82669, lng:139.67646, area:"戸田・さいたま / 埼玉", rating:4,
+    memo:"荒川沿いの広大な公園。芝生が広く日光浴する人が多い。都心から近くアクセス良好な埼玉の焼き活スポット。",
+    tips:"駐車場無料。自転車でのアクセスも◎。売店・BBQエリアあり。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/8/8c/Saiko_%C2%B7_Doman_Green_Park_1.jpg",
+    preset:true
+  },
+  {
+    id:"sa2", name:"荒川河川敷（熊谷）", type:"outdoor", pref:"saitama",
+    lat:36.14329, lng:139.38898, area:"熊谷 / 埼玉", rating:4,
+    memo:"「日本一暑い街」熊谷の荒川河川敷。広大な河川敷で遮るものなし。夏の日差しは都内を凌駕する強烈さ。",
+    tips:"熊谷の夏は全国屈指の猛暑。本気勢向けの灼熱スポット。水分補給は普段の倍以上で。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/4/49/251128_Kumagaya_Arakawa_Ryokuchi_15.jpg",
+    preset:true
+  },
+  {
+    id:"sa3", name:"国営武蔵丘陵森林公園 芝生広場", type:"outdoor", pref:"saitama",
+    lat:36.02213, lng:139.3587, area:"滑川・比企郡 / 埼玉", rating:4,
+    memo:"国営公園の広大な芝生エリア。開放感抜群で日光浴に最適。木陰も多く休憩しながら焼ける。",
+    tips:"入場料あり（450円）。広大なので自転車レンタルがオススメ。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"sa4", name:"見沼代親水公園・芝生エリア", type:"outdoor", pref:"saitama",
+    lat:35.91275, lng:139.68102, area:"さいたま市 / 埼玉", rating:3,
+    memo:"さいたま市内の親水公園。緑豊かな芝生エリアで地元の日光浴勢が集まる穴場。",
+    tips:"浦和美園駅から徒歩圏内。ファミリー層が多いが焼き勢スペースも十分。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"sa5", name:"荒川河川敷（浮間公園付近）", type:"outdoor", pref:"saitama",
+    lat:35.78701, lng:139.69497, area:"浮間・板橋〜戸田 / 埼玉", rating:4,
+    memo:"都内と埼玉の境界付近の河川敷。板橋区〜戸田市にまたがる広大な芝生エリア。上裸勢が集まる人気スポット。",
+    tips:"都内からのアクセスも良好。浮間舟渡駅から徒歩圏内。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"sa6", name:"長瀞 荒川ライン下り河原", type:"outdoor", pref:"saitama",
+    lat:36.10811, lng:139.10385, area:"長瀞 / 埼玉", rating:5,
+    memo:"秩父・長瀞の荒川沿いの岩畳・河原。夏は水遊び勢で賑わい、河原で上裸で焼くのが定番スタイル。",
+    tips:"ライン下りと合わせて楽しめる。岩場での日焼けは反射光もあり焼け方が強烈。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/e/ea/Arakawa_River_from_Takasago_Bridge_in_Nagatoro%2C_Saitama_3.png",
+    preset:true
+  },
+
+  // ════════════════════════════════
+  //  🌻 千葉 屋外スポット
+  // ════════════════════════════════
+  {
+    id:"c1", name:"千葉 稲毛海浜公園 砂浜", type:"outdoor", pref:"chiba",
+    lat:35.64279, lng:140.03456, area:"稲毛・千葉市 / 千葉", rating:4,
+    memo:"東京湾沿いの海浜公園。砂浜が整備されており日光浴しやすい環境。アクセスも良好な千葉の定番。",
+    tips:"稲毛海岸駅から徒歩15分。夏はウォータースライダーも営業。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/c/cf/Chiba_beach.jpg",
+    preset:true
+  },
+  {
+    id:"c2", name:"九十九里浜（片貝海水浴場）", type:"outdoor", pref:"chiba",
+    lat:35.51724, lng:140.40488, area:"九十九里・山武 / 千葉", rating:5,
+    memo:"全長約66kmの九十九里浜。砂浜が果てしなく広がりまさに上裸日焼けの聖地。波も適度でサーファーも多い。",
+    tips:"東京から車で1.5〜2時間。混雑が少なく広大な砂浜を独占できる。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/c/cb/Kujukuri_be%EF%B8%8F%EF%B8%8F%EF%B8%8Fach_9.jpg",
+    preset:true
+  },
+  {
+    id:"c3", name:"勝浦海水浴場", type:"outdoor", pref:"chiba",
+    lat:35.14533, lng:140.13148, area:"勝浦 / 千葉", rating:4,
+    memo:"外房エリアの人気ビーチ。透明度が高く砂浜も広い。都会の喧騒を離れた本格的な海水浴・日焼けスポット。",
+    tips:"勝浦駅から徒歩10分。近くに朝市も有名。一泊して朝から焼くのがベスト。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/2/2d/Moriya_Beach%2C_Katsuura_-Aug._2010_a.jpg",
+    preset:true
+  },
+  {
+    id:"c4", name:"御宿海水浴場", type:"outdoor", pref:"chiba",
+    lat:35.10163, lng:140.35336, area:"御宿 / 千葉", rating:5,
+    memo:"外房の美しいビーチ。白い砂と青い海が広がり、本格的なリゾート気分で上裸日焼けが楽しめる。",
+    tips:"御宿駅から徒歩15分。メキシコ記念碑も近い。混雑が少なく穴場感あり。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/6/6d/Beach_at_Onjuku%2C_Chiba_prefecture_Wikivoyage_banner.jpg",
+    preset:true
+  },
+  {
+    id:"c5", name:"鴨川シーワールド裏 砂浜", type:"outdoor", pref:"chiba",
+    lat:35.11499, lng:140.09327, area:"鴨川 / 千葉", rating:4,
+    memo:"鴨川エリアの海岸。手前の観光地から少し歩くと人の少ない砂浜に出られる。穴場の焼き活スポット。",
+    tips:"海岸沿いを散策しながら好みの場所を見つけるのがオススメ。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/7/73/Kamogawa_beach_%E9%B4%A8%E5%B7%9D%E3%81%AE%E6%B5%B7%E5%B2%B8_%282683112372%29.jpg",
+    preset:true
+  },
+  {
+    id:"c6", name:"館山海水浴場（北条海岸）", type:"outdoor", pref:"chiba",
+    lat:34.99622, lng:139.86885, area:"館山 / 千葉", rating:5,
+    memo:"南房総の館山ビーチ。関東最南端クラスのロケーションで水温が高く日差しも強烈。本気焼き勢の聖地。",
+    tips:"東京から館山道で約2時間。宿泊して丸一日焼くのが最高の贅沢。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/b/b7/%E5%8C%97%E6%9D%A1%E6%B5%B7%E5%B2%B8.jpg",
+    preset:true
+  },
+  {
+    id:"c7", name:"検見川浜（幕張エリア海岸）", type:"outdoor", pref:"chiba",
+    lat:35.66099, lng:140.06496, area:"幕張・千葉市 / 千葉", rating:4,
+    memo:"幕張新都心近くの海浜エリア。ウィンドサーフィン等マリンスポーツが盛んで、砂浜での日光浴者も多い。",
+    tips:"海浜幕張駅から徒歩15分。近隣のショッピングモールと組み合わせて一日楽しめる。",
+    photo:"",
+    preset:true
+  },
+
+
+  // ════════════════════════════════
+  //  ☀️ 天サロ追加スポット（東京）
+  // ════════════════════════════════
+
+  // ── 東京 追加 ──
+  {
+    id:"t16", name:"多摩川河川敷（狛江・調布）", type:"outdoor", pref:"tokyo",
+    lat:35.6308, lng:139.578, area:"狛江・調布 / 東京", rating:4,
+    memo:"調布・狛江エリアの多摩川河川敷。穏やかな流れと広大な砂地でのびのび焼ける。",
+    tips:"狛江駅から徒歩10分。BBQも盛んで週末は賑やか。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/f/f3/Izumi-Tamagawa_Flood_mark_02.jpg",
+    preset:true
+  },
+  {
+    id:"t17", name:"舎人公園 芝生広場", type:"outdoor", pref:"tokyo",
+    lat:35.7878, lng:139.8165, area:"舎人 / 東京", rating:4,
+    memo:"足立区の広大な公園。芝生が360度広がり遮るものなし。東京北東部の穴場天サロ。",
+    tips:"日暮里・舎人ライナー「舎人公園」駅すぐ。夏の日差しは強烈。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/a/ac/Toneri_Park%2C_Adachi%2C_Tokyo.jpg",
+    preset:true
+  },
+  {
+    id:"t18", name:"水元公園 芝生広場", type:"outdoor", pref:"tokyo",
+    lat:35.7803, lng:139.8787, area:"葛飾・水元 / 東京", rating:4,
+    memo:"葛飾区の大型公園。池と芝生が広がり開放感◎。都内東部の隠れた天サロスポット。",
+    tips:"金町駅からバス。平日は人が少なくのびのびできる。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/5/52/Higashi-Mizumoto_Park_%28Higashi-Mizumoto_3-chome%2C_Katsushika%2C_Tokyo%29.jpg",
+    preset:true
+  },
+  {
+    id:"t19", name:"石神井公園 芝生エリア", type:"outdoor", pref:"tokyo",
+    lat:35.7399, lng:139.6046, area:"石神井 / 東京", rating:3,
+    memo:"練馬区の人気公園。池周辺の芝生エリアで日光浴する人が多い。木陰も適度にあり。",
+    tips:"石神井公園駅から徒歩5分。週末は家族連れ多め。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/c/c3/Shrine_%40_Shakujii_Park_%40_Nerima_%288698009590%29.jpg",
+    preset:true
+  },
+  {
+    id:"t20", name:"善福寺公園 芝生", type:"outdoor", pref:"tokyo",
+    lat:35.7145, lng:139.6328, area:"西荻窪 / 東京", rating:3,
+    memo:"杉並区の善福寺川沿いの公園。こじんまりした芝生エリアでのんびり焼ける穴場。",
+    tips:"西荻窪駅から徒歩15分。人が少なく静かに過ごせる。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/a/a0/Zenpukuji_Park_-_Suginami%2C_Tokyo_-_Nov._2019.jpg",
+    preset:true
+  },
+  {
+    id:"t21", name:"洗足池公園 芝生", type:"outdoor", pref:"tokyo",
+    lat:35.5905, lng:139.7059, area:"洗足 / 東京", rating:3,
+    memo:"大田区の洗足池周辺。池沿いの芝生で日光浴できる都南部の穴場スポット。",
+    tips:"洗足池駅すぐ。釣り人も多く長閑な雰囲気。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/7/70/Senzoku_hachiman_jinja_ota_tokyo.jpg",
+    preset:true
+  },
+  {
+    id:"t22", name:"多摩川河川敷（田園調布〜丸子橋）", type:"outdoor", pref:"tokyo",
+    lat:35.586, lng:139.656, area:"田園調布 / 東京", rating:4,
+    memo:"丸子橋〜田園調布間の多摩川河川敷。芝生が整備されて焼き活勢にも人気の定番エリア。",
+    tips:"新丸子駅から徒歩5分。土日はBBQ・スポーツ勢で賑わう。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/5/58/Chofu_weir_and_Marukobashi_bridge_-_panoramio.jpg",
+    preset:true
+  },
+  {
+    id:"t23", name:"臨海副都心 青海周辺", type:"outdoor", pref:"tokyo",
+    lat:35.6248, lng:139.7757, area:"青海・お台場 / 東京", rating:3,
+    memo:"お台場エリア青海の海沿い広場。整備されたデッキと芝生で天サロ気分が味わえる。",
+    tips:"りんかい線「東京テレポート」駅から徒歩10分。夜景もきれい。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"t24", name:"小山内裏公園 芝生", type:"outdoor", pref:"tokyo",
+    lat:35.6275, lng:139.4285, area:"町田 / 東京", rating:3,
+    memo:"町田市と八王子市にまたがる丘陵公園。見晴らしの良い芝生広場で日光浴できる。",
+    tips:"多摩境駅から徒歩10分。周辺に他の公園も多く1日コースに。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"t25", name:"羽村堰 多摩川河川敷", type:"outdoor", pref:"tokyo",
+    lat:35.7564, lng:139.3127, area:"羽村 / 東京", rating:4,
+    memo:"奥多摩方面、羽村堰近くの多摩川河川敷。広大な砂利・砂地エリアで遮光物ゼロ。",
+    tips:"羽村駅から徒歩15分。夏の日差しは強烈。サクラの名所でもある。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/c/c7/TamagawaJosui3810.jpg",
+    preset:true
+  },
+  {
+    id:"t26", name:"東京ゲートブリッジ下 海辺広場", type:"outdoor", pref:"tokyo",
+    lat:35.62, lng:139.82, area:"江東区 / 東京", rating:4,
+    memo:"東京ゲートブリッジ下の海辺公園。迫力ある橋を眺めながら砂浜・芝生で日光浴できる。",
+    tips:"東京メトロ「新木場」からバス。人が少なく穴場感抜群。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/6/6b/%E6%9D%B1%E4%BA%AC%E3%82%B2%E3%83%BC%E3%83%88%E3%83%96%E3%83%AA%E3%83%83%E3%82%B8_%E5%A4%9C%E6%99%AF4_-_Tokyo_Gate-Bridge_-_panoramio.jpg",
+    preset:true
+  },
+  {
+    id:"t27", name:"小松川千本桜 荒川河川敷", type:"outdoor", pref:"tokyo",
+    lat:35.6998, lng:139.8508, area:"小松川 / 東京", rating:3,
+    memo:"江戸川区・荒川河川敷の桜並木エリア。広大な芝生で春〜夏の日光浴に最適。",
+    tips:"西葛西駅からバス。平日は人が少なく静かに焼ける。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/e/e3/Ojima_Komatsugawa_Park_%40_Edogawa_City_%40_Tokyo_%2814228668442%29.jpg",
+    preset:true
+  },
+  {
+    id:"t28", name:"横十間川親水公園 周辺芝生", type:"outdoor", pref:"tokyo",
+    lat:35.6853, lng:139.8155, area:"江東 / 東京", rating:3,
+    memo:"江東区の親水公園。整備された芝生エリアで下町エリアの天サロ穴場スポット。",
+    tips:"住吉駅から徒歩10分。公園沿いの芝生が広くのびのびできる。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/c/cd/Canal_%40_Yokojukkengawa_Waterfront_Park_%40_Koto_%2814916861248%29.jpg",
+    preset:true
+  },
+  {
+    id:"t29", name:"東綾瀬公園 芝生広場", type:"outdoor", pref:"tokyo",
+    lat:35.762, lng:139.8475, area:"綾瀬 / 東京", rating:3,
+    memo:"足立区東綾瀬の大型公園。広大な芝生で遮光物が少なく、夏の日差しが強い。",
+    tips:"綾瀬駅からバス。スポーツ施設も充実。平日は特に空いている。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/1/1d/Higashi_Ayase_Park_Central.jpg",
+    preset:true
+  },
+  {
+    id:"t30", name:"神代植物公園 芝生広場", type:"outdoor", pref:"tokyo",
+    lat:35.6521, lng:139.5736, area:"調布 / 東京", rating:3,
+    memo:"調布市の植物公園。広大な芝生広場で植物に囲まれながら日光浴できる。",
+    tips:"深大寺バス停から徒歩5分。入場料あり（500円）。木陰と芝生のバランスが良い。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/2/2b/Jindai_Plants_Park_2.jpg",
+    preset:true
+  },
+
+  // ── 神奈川 追加 ──
+  {
+    id:"k10", name:"鎌倉 材木座海岸", type:"outdoor", pref:"kanagawa",
+    lat:35.3075, lng:139.5563, area:"鎌倉 / 神奈川", rating:5,
+    memo:"由比ヶ浜の東隣のビーチ。観光客が少なく地元サーファー・焼き活勢が多い穴場ビーチ。",
+    tips:"鎌倉駅から徒歩20分。由比ヶ浜より空いていてのびのびできる。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/e/ea/Kamakura_zaimokuza_20180619.jpg",
+    preset:true
+  },
+  {
+    id:"k11", name:"鎌倉 腰越海岸", type:"outdoor", pref:"kanagawa",
+    lat:35.3037, lng:139.5183, area:"腰越 / 神奈川", rating:4,
+    memo:"江の島と鎌倉の中間に位置するビーチ。混みすぎずほどよい賑わい。上裸日焼け勢も多い。",
+    tips:"腰越駅から徒歩5分。江ノ電沿線の穴場ビーチ。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/0/0b/Koshigoe_Beach_2024_2.jpg",
+    preset:true
+  },
+  {
+    id:"k12", name:"片瀬西浜・鵠沼海岸", type:"outdoor", pref:"kanagawa",
+    lat:35.3087, lng:139.4685, area:"鵠沼 / 神奈川", rating:5,
+    memo:"江の島西側の広大なビーチ。サーファーの聖地で上裸勢が最も集まる湘南の王道スポット。",
+    tips:"片瀬江ノ島駅から徒歩5分。夏は海の家が充実。シャワーも完備。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/e/eb/Kugenuma_beach_04.jpg",
+    preset:true
+  },
+  {
+    id:"k13", name:"辻堂海岸", type:"outdoor", pref:"kanagawa",
+    lat:35.3245, lng:139.4398, area:"辻堂 / 神奈川", rating:4,
+    memo:"茅ヶ崎と藤沢の間のビーチ。人が少なく広大な砂浜でのびのびと焼ける湘南の穴場。",
+    tips:"辻堂駅から徒歩20分またはバス。週末でも比較的空いている。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/f/ff/Mother_and_kids_%2821351167190%29.jpg",
+    preset:true
+  },
+  {
+    id:"k14", name:"二宮海岸", type:"outdoor", pref:"kanagawa",
+    lat:35.2985, lng:139.2448, area:"二宮 / 神奈川", rating:4,
+    memo:"湘南西端の静かなビーチ。観光地化されておらず地元民の天サロスポット。のびのびできる。",
+    tips:"二宮駅から徒歩15分。比較的空いていて穴場感あり。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"k15", name:"小田原海岸（御幸の浜）", type:"outdoor", pref:"kanagawa",
+    lat:35.2567, lng:139.1695, area:"小田原 / 神奈川", rating:4,
+    memo:"城下町小田原の海岸。歴史ある御幸の浜は広く開放的な天サロスポット。",
+    tips:"小田原駅から徒歩20分。小田原城とのセット観光も◎。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/d/d0/Odawara_Sagami_Bay_seen_from_the_sandy_beach.jpg",
+    preset:true
+  },
+  {
+    id:"k16", name:"真鶴半島 琴ヶ浜", type:"outdoor", pref:"kanagawa",
+    lat:35.1573, lng:139.1338, area:"真鶴 / 神奈川", rating:5,
+    memo:"伊豆半島の付け根、真鶴の秘境ビーチ。透明度抜群で岩礁もあり焼け方が強烈。",
+    tips:"真鶴駅からバス。観光客少なく独占に近い状態で焼ける。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"k17", name:"湯河原海水浴場", type:"outdoor", pref:"kanagawa",
+    lat:35.1457, lng:139.1028, area:"湯河原 / 神奈川", rating:4,
+    memo:"温泉地・湯河原の海岸。焼いた後に温泉で仕上げという最高のルーティンが実現できる。",
+    tips:"湯河原駅からバス10分。砂利浜だが開放感◎。温泉セット利用がオススメ。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/9/99/Beach_%40_Pacific_Ocean_%40_Yugawara_%2811167335923%29.jpg",
+    preset:true
+  },
+  {
+    id:"k18", name:"葉山 森戸海岸", type:"outdoor", pref:"kanagawa",
+    lat:35.2797, lng:139.5796, area:"葉山 / 神奈川", rating:5,
+    memo:"葉山マリーナに隣接した美しいビーチ。富士山も見える絶景ロケーション。上裸OKな雰囲気。",
+    tips:"逗子駅からバス15分。おしゃれなカフェも近くにあり。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/4/48/Hayama_Town_Pagebanner.jpg",
+    preset:true
+  },
+  {
+    id:"k19", name:"相模川河口・茅ヶ崎ヘッドランド", type:"outdoor", pref:"kanagawa",
+    lat:35.3315, lng:139.4215, area:"茅ヶ崎 / 神奈川", rating:4,
+    memo:"相模川河口付近のビーチ。ヘッドランドが波を穏やかにし砂浜は広大。穴場天サロ。",
+    tips:"茅ヶ崎駅からバス。混雑しにくいエリアでゆっくり焼ける。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"k20", name:"横須賀 観音崎海水浴場", type:"outdoor", pref:"kanagawa",
+    lat:35.2798, lng:139.7149, area:"観音崎 / 神奈川", rating:4,
+    memo:"三浦半島東岸の隠れたビーチ。透明度が高く岩礁も多い。本格派の天サロスポット。",
+    tips:"馬堀海岸駅からバス。平日は特に空いていて貸切状態のことも。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/3/3c/Beach_near_Kannonzaki_Bridge.jpg",
+    preset:true
+  },
+  {
+    id:"k21", name:"伊勢原・比々多あたりの丘陵", type:"outdoor", pref:"kanagawa",
+    lat:35.4098, lng:139.312, area:"伊勢原 / 神奈川", rating:3,
+    memo:"伊勢原市郊外の開放的な丘陵地帯。農地や草地が広がりのどかな環境で日光浴できる。",
+    tips:"伊勢原駅からバス。周囲に建物が少なく遮るものなし。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"k22", name:"秦野 曽屋水道公園周辺", type:"outdoor", pref:"kanagawa",
+    lat:35.3737, lng:139.2278, area:"秦野 / 神奈川", rating:3,
+    memo:"秦野市の公園緑地エリア。丹沢の麓に広がる開放的な芝生で日光浴できる穴場。",
+    tips:"秦野駅から徒歩15分。丹沢の山々を眺めながらのんびり焼ける。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"k23", name:"中井町 里山公園", type:"outdoor", pref:"kanagawa",
+    lat:35.3497, lng:139.2568, area:"中井 / 神奈川", rating:3,
+    memo:"神奈川県中井町の里山公園。広大な芝生広場があり、週末に日光浴する地元民が多い。",
+    tips:"二宮駅からバス。人が少なく静かな環境で焼ける穴場スポット。",
+    photo:"",
+    preset:true
+  },
+
+  // ── 埼玉 追加 ──
+  {
+    id:"sa7", name:"荒川河川敷（鴻巣・吉見）", type:"outdoor", pref:"saitama",
+    lat:36.059, lng:139.488, area:"鴻巣 / 埼玉", rating:4,
+    memo:"荒川の広大な河川敷。コスモスで有名な鴻巣エリアは夏の日差しも強烈。本気焼き向け。",
+    tips:"鴻巣駅からバス。広大すぎて人を探すのが困難なくらい空いている。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"sa8", name:"入間川河川敷（狭山・入間）", type:"outdoor", pref:"saitama",
+    lat:35.851, lng:139.372, area:"狭山 / 埼玉", rating:3,
+    memo:"入間川沿いの河川敷。狭山市周辺はのどかな雰囲気で日光浴する地元民が多い。",
+    tips:"入間市駅・狭山市駅からアクセス。広大な芝生エリアあり。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/3/3d/%E7%8B%AD%E5%B1%B1%E6%B9%96_-_panoramio.jpg",
+    preset:true
+  },
+  {
+    id:"sa9", name:"都幾川河原（ときがわ町）", type:"outdoor", pref:"saitama",
+    lat:35.9965, lng:139.2997, area:"ときがわ / 埼玉", rating:5,
+    memo:"奥武蔵・ときがわ町の清流沿い河原。水辺での日焼けは反射光もあり効果絶大。",
+    tips:"東武「武蔵嵐山」駅からバス。夏は川遊び客が多い。遮るものなしの灼熱スポット。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/1/12/Suzumegawa%28Spallow_river%29_in_Tokigawa_Pref._Saitama.jpg",
+    preset:true
+  },
+  {
+    id:"sa10", name:"荒川河川敷（北本・桶川）", type:"outdoor", pref:"saitama",
+    lat:36.0245, lng:139.491, area:"北本 / 埼玉", rating:3,
+    memo:"北本市・桶川市付近の荒川河川敷。農村風景の中に広がる開放的な河川敷。",
+    tips:"北本駅・桶川駅からバス。のどかな環境でのびのびと焼ける。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/7/7d/Kitamoto_Arai_Bridge_1.JPG",
+    preset:true
+  },
+  {
+    id:"sa11", name:"彩湖 湖畔芝生", type:"outdoor", pref:"saitama",
+    lat:35.8412, lng:139.6629, area:"戸田 / 埼玉", rating:4,
+    memo:"彩湖の湖畔沿いの芝生エリア。水辺の反射光で効率よく焼ける都市近郊の天サロ。",
+    tips:"荒川沿い自転車道でのアクセスが特に快適。湖畔で涼みながら焼ける。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/8/8c/Saiko_%C2%B7_Doman_Green_Park_1.jpg",
+    preset:true
+  },
+  {
+    id:"sa12", name:"越辺川河川敷（川島町）", type:"outdoor", pref:"saitama",
+    lat:36.0103, lng:139.4648, area:"川島 / 埼玉", rating:3,
+    memo:"比企郡川島町の越辺川沿い。のどかな田園風景の中で遮るものゼロの日光浴が楽しめる。",
+    tips:"東松山駅からバス。人が極端に少なく完全な穴場スポット。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/e/ef/2014-12-19_Kawajima_swan.jpg",
+    preset:true
+  },
+  {
+    id:"sa13", name:"元荒川河川敷（春日部・越谷）", type:"outdoor", pref:"saitama",
+    lat:35.9722, lng:139.7523, area:"越谷 / 埼玉", rating:3,
+    memo:"越谷・春日部エリアの元荒川沿い。桜の名所でもあり、整備された芝生エリアが天サロに最適。",
+    tips:"北越谷駅から徒歩15分。平日は地元の日光浴勢が集まる穴場。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"sa14", name:"武蔵野の森公園 芝生", type:"outdoor", pref:"saitama",
+    lat:35.6654, lng:139.4755, area:"府中 / 東京", rating:4,
+    memo:"調布飛行場跡地に整備された大型公園。超広大な芝生エリアで遮るものなし。本気焼き向け。",
+    tips:"飛田給駅から徒歩15分。風が強い日も多いが開放感は最高。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"sa15", name:"多摩湖（村山貯水池）堤防", type:"outdoor", pref:"saitama",
+    lat:35.7543, lng:139.4234, area:"東大和 / 東京", rating:3,
+    memo:"東大和市の多摩湖堤防。見晴らしの良い開放的なロケーションで日光浴する地元民が多い。",
+    tips:"西武「武蔵大和」駅から徒歩10分。湖を眺めながらのんびり焼ける。",
+    photo:"",
+    preset:true
+  },
+
+  // ── 千葉 追加 ──
+  {
+    id:"c8", name:"一宮・釣ヶ崎海岸", type:"outdoor", pref:"chiba",
+    lat:35.3893, lng:140.3608, area:"一宮 / 千葉", rating:5,
+    memo:"東京五輪サーフィン会場となった一宮の海岸。広大なビーチで開放感◎。サーファー聖地。",
+    tips:"上総一ノ宮駅から徒歩20分。夏は波と太陽を満喫できる本格天サロ。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/1/19/Japanese_worlds_first_Olympic_surf_beach.jpg",
+    preset:true
+  },
+  {
+    id:"c9", name:"白子海水浴場", type:"outdoor", pref:"chiba",
+    lat:35.4522, lng:140.3662, area:"白子 / 千葉", rating:4,
+    memo:"九十九里南部の白子ビーチ。広大な砂浜と適度な波。サーファーと日焼け勢が共存する。",
+    tips:"白子駅からバス。駐車場充実で車でのアクセスが便利。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"c10", name:"岩井海水浴場（南房総）", type:"outdoor", pref:"chiba",
+    lat:35.0863, lng:139.8437, area:"南房総 / 千葉", rating:5,
+    memo:"南房総の美しいビーチ。透明度が高く水温も高め。都内から離れているだけに日差しも強烈。",
+    tips:"岩井駅から徒歩15分。夏でも混みすぎない穴場感。シュノーケリングも◎。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"c11", name:"富浦海水浴場", type:"outdoor", pref:"chiba",
+    lat:35.0442, lng:139.829, area:"富浦 / 千葉", rating:4,
+    memo:"南房総・富浦の海岸。穏やかな内湾で波が静か。じっくりと日焼けするのに最適。",
+    tips:"富浦駅から徒歩10分。温暖な気候で日照時間が長い。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/b/be/Tomiuracho_Toyooka%2C_Minamiboso%2C_Chiba_Prefecture_299-2402%2C_Japan_-_panoramio_%282%29.jpg",
+    preset:true
+  },
+  {
+    id:"c12", name:"金谷海水浴場（東京湾フェリー側）", type:"outdoor", pref:"chiba",
+    lat:35.1722, lng:139.8261, area:"富津 / 千葉", rating:4,
+    memo:"東京湾フェリー乗り場近くのビーチ。対岸の神奈川を眺めながら焼ける独特のロケーション。",
+    tips:"金谷港からすぐ。フェリーで久里浜から来るルートも人気。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/0/0a/Kanaya%2C_Futtsu_City.jpg",
+    preset:true
+  },
+  {
+    id:"c13", name:"大原海水浴場", type:"outdoor", pref:"chiba",
+    lat:35.2598, lng:140.3888, area:"いすみ / 千葉", rating:4,
+    memo:"外房・いすみ市の大原ビーチ。手つかずの自然が残り広大な砂浜で上裸日焼けが楽しめる。",
+    tips:"大原駅から徒歩15分。観光地化されていない素朴さが魅力。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"c14", name:"銚子 犬吠埼海岸", type:"outdoor", pref:"chiba",
+    lat:35.7075, lng:140.8693, area:"銚子 / 千葉", rating:5,
+    memo:"関東最東端の犬吠埼。断崖絶壁と広大な砂浜。東から上る太陽を正面に浴びる唯一のロケーション。",
+    tips:"犬吠駅から徒歩10分。元旦の日の出スポットとしても超有名。日差しは最強クラス。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/f/ff/Inub%C5%8Dsaki_Lighthouse_under_the_full_of_stars_-_Cape_Inub%C5%8D_-_Ch%C5%8Dshi%2C_Chiba_-_Japan_-_8_June_2013.jpg",
+    preset:true
+  },
+  {
+    id:"c15", name:"浜野海水浴場（銚子）", type:"outdoor", pref:"chiba",
+    lat:35.6758, lng:140.8135, area:"銚子 / 千葉", rating:4,
+    memo:"銚子市の海水浴場。犬吠埼より混雑が少なく地元民が通う穴場ビーチ。",
+    tips:"銚子電鉄「海鹿島」駅から徒歩10分。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/a/a0/Cape-Inubosaki_from_Toriake-ura_beach_Choshi_city_Chiba_Japan.jpg",
+    preset:true
+  },
+  {
+    id:"c16", name:"九十九里浜 白里海岸", type:"outdoor", pref:"chiba",
+    lat:35.4868, lng:140.3855, area:"大網白里 / 千葉", rating:5,
+    memo:"九十九里浜中央部の白里海岸。広大な砂浜が果てしなく続く。関東有数の天サロスポット。",
+    tips:"大網駅からバス。夏でも混まないエリアでのびのびと焼ける。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/a/a5/Sirasato_beach_2022.jpg",
+    preset:true
+  },
+  {
+    id:"c17", name:"千葉港・千葉みなと公園", type:"outdoor", pref:"chiba",
+    lat:35.6076, lng:140.1028, area:"千葉みなと / 千葉", rating:3,
+    memo:"千葉市の都市型ウォーターフロント。整備された海辺の公園で都市部の天サロとして利用できる。",
+    tips:"千葉みなと駅すぐ。買い物ついでに立ち寄れる気軽さが魅力。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"c18", name:"蓮沼海浜公園 砂浜", type:"outdoor", pref:"chiba",
+    lat:35.5618, lng:140.4257, area:"山武 / 千葉", rating:5,
+    memo:"九十九里北部の蓮沼海岸。ウォーターパーク隣接で夏は賑やか。広大な砂浜が魅力。",
+    tips:"東金駅からバス。駐車場充実。夏は海の家でシャワー利用可。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"c19", name:"太東海水浴場", type:"outdoor", pref:"chiba",
+    lat:35.3047, lng:140.409, area:"いすみ / 千葉", rating:5,
+    memo:"外房の太東ビーチ。透明度が高く波も適度。サーファーと天サロ勢が共存する名スポット。",
+    tips:"東浪見駅から徒歩10分。人混みが少なく穴場感がある。",
+    photo:"",
+    preset:true
+  },
+  {
+    id:"c20", name:"行川アイランド跡地 岩礁海岸", type:"outdoor", pref:"chiba",
+    lat:35.1227, lng:140.1762, area:"勝浦 / 千葉", rating:4,
+    memo:"閉園した行川アイランド跡地付近の岩礁海岸。人が少なく岩礁反射光で効率よく焼ける。",
+    tips:"行川アイランド駅から徒歩5分。マニア向けの穴場スポット。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/8/86/250906_Ubara_Coast_Katsuura_Chiba_pref_Japan02s3.jpg",
+    preset:true
+  },
+  {
+    id:"c21", name:"鴨川 小湊海岸", type:"outdoor", pref:"chiba",
+    lat:35.1432, lng:140.0652, area:"鴨川 / 千葉", rating:4,
+    memo:"鴨川市の小湊海岸。内房側で波が穏やか。砂浜での日光浴に最適な南房総の天サロ。",
+    tips:"小湊駅から徒歩15分。駐車場あり。鯛の浦遊覧船と合わせて観光も◎。",
+    photo:"",
+    preset:true
+  },
+
+
+  // ════════════════════════════════
+  //  💜 東京 日サロ（実在店舗）
+  // ════════════════════════════════
+  {
+    id:"sl1", name:"EXPERIA 渋谷店", type:"salon", pref:"tokyo",
+    lat:35.6591, lng:139.7006, area:"渋谷 / 東京", rating:5,
+    memo:"国内最大手チェーン・EXPERIA渋谷。最新ドイツ製マシン多数。清潔感◎。",
+    tips:"初回体験プランあり。Web予約推奨。渋谷センター街から徒歩3分。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl2", name:"EXPERIA 新宿店", type:"salon", pref:"tokyo",
+    lat:35.6938, lng:139.7034, area:"新宿 / 東京", rating:4,
+    memo:"新宿東口のEXPERIA。深夜営業で仕事帰りにも◎。マシン15台以上。",
+    tips:"会員証は全国共通。深夜割引でお得。新宿駅東口から徒歩5分。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl3", name:"EXPERIA 池袋店", type:"salon", pref:"tokyo",
+    lat:35.7295, lng:139.7109, area:"池袋 / 東京", rating:4,
+    memo:"池袋東口のEXPERIA。スタンディング・ベッド両対応。アクセス抜群。",
+    tips:"都度利用可。月額会員がお得。平日昼間は空いていて快適。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl4", name:"EXPERIA 銀座店", type:"salon", pref:"tokyo",
+    lat:35.6722, lng:139.7649, area:"銀座 / 東京", rating:5,
+    memo:"銀座のEXPERIA。完全個室・高級感ある内装。接客もワンランク上。",
+    tips:"完全予約制。銀座らしい上質な空間。カップル利用も可。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl5", name:"EXPERIA 恵比寿店", type:"salon", pref:"tokyo",
+    lat:35.6469, lng:139.7102, area:"恵比寿 / 東京", rating:4,
+    memo:"恵比寿のEXPERIA。アメニティ充実・女性客多数。リゾート感ある内装。",
+    tips:"恵比寿駅から徒歩5分。事前予約でスムーズに入れる。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl6", name:"EXPERIA 表参道店", type:"salon", pref:"tokyo",
+    lat:35.6653, lng:139.7120, area:"表参道 / 東京", rating:5,
+    memo:"表参道のEXPERIA。モデル・インフルエンサー御用達。最上位マシン完備。",
+    tips:"完全予約制。都内ハイエンド層が集まる。表参道駅B2出口すぐ。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl7", name:"EXPERIA 自由が丘店", type:"salon", pref:"tokyo",
+    lat:35.6074, lng:139.6686, area:"自由が丘 / 東京", rating:4,
+    memo:"自由が丘のEXPERIA。女性が通いやすいきれいな環境。月額会員制。",
+    tips:"自由が丘駅から徒歩3分。カフェ感覚で通える雰囲気。予約推奨。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl8", name:"EXPERIA 六本木店", type:"salon", pref:"tokyo",
+    lat:35.6632, lng:139.7316, area:"六本木 / 東京", rating:5,
+    memo:"六本木のEXPERIA。深夜3時まで営業。クラブ前後の焼き込みに最適。",
+    tips:"深夜割引あり。英語対応OK。外国人客も多い国際的な雰囲気。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl9", name:"EXPERIA 下北沢店", type:"salon", pref:"tokyo",
+    lat:35.6615, lng:139.6679, area:"下北沢 / 東京", rating:3,
+    memo:"下北沢のEXPERIA。若者・アーティスト層に人気。リーズナブルな料金。",
+    tips:"都度利用OK。下北沢駅南口から徒歩3分。オーナー気さくで初心者歓迎。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl10", name:"EXPERIA 吉祥寺店", type:"salon", pref:"tokyo",
+    lat:35.7018, lng:139.5796, area:"吉祥寺 / 東京", rating:4,
+    memo:"吉祥寺のEXPERIA。スタンディング・ベッド両タイプ完備。マシン充実。",
+    tips:"井の頭公園で屋外焼き後に仕上げで来る人多数。月額会員がお得。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl11", name:"EXPERIA 中目黒店", type:"salon", pref:"tokyo",
+    lat:35.6439, lng:139.6990, area:"中目黒 / 東京", rating:5,
+    memo:"目黒川沿いのEXPERIA。完全個室・スタイリッシュな内装。桜シーズンは特に人気。",
+    tips:"完全予約制。中目黒駅から徒歩5分。早めの予約を強く推奨。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl12", name:"EXPERIA 品川店", type:"salon", pref:"tokyo",
+    lat:35.6286, lng:139.7390, area:"品川 / 東京", rating:3,
+    memo:"品川駅港南口のEXPERIA。ビジネスマンのランチ・帰宅前利用が多い。",
+    tips:"30分コースから。予約不要で立ち寄りやすい。品川駅から徒歩3分。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl13", name:"EXPERIA 上野店", type:"salon", pref:"tokyo",
+    lat:35.7128, lng:139.7768, area:"上野 / 東京", rating:3,
+    memo:"上野のEXPERIA。アメ横近くでアクセス抜群。リーズナブルな料金設定。",
+    tips:"都度利用OK。上野駅から徒歩5分。観光のついでにも立ち寄れる。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl14", name:"ブロンズ 原宿店", type:"salon", pref:"tokyo",
+    lat:35.6700, lng:139.7025, area:"原宿 / 東京", rating:4,
+    memo:"原宿の老舗タンニングサロン・ブロンズ。若者文化の発信地に根付く実力派サロン。",
+    tips:"竹下通りから徒歩5分。若者向けプランが充実。事前予約がスムーズ。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  },
+  {
+    id:"sl15", name:"EXPERIA 蒲田店", type:"salon", pref:"tokyo",
+    lat:35.5637, lng:139.7167, area:"蒲田 / 東京", rating:3,
+    memo:"蒲田のEXPERIA。地元密着型で常連客多数。アットホームな雰囲気。",
+    tips:"月額定額プランが格安。蒲田駅東口から徒歩3分。初心者も安心して通える。",
+    photo:"https://www.revolt.co.jp/info/wp-content/uploads/2018/06/4801398D-7178-41A5-BD71-62197ABF1884.jpeg",
+    preset:true
+  }
+];
+
+// ─────────────────────────────────────────────
+//  MAP INIT
+// ─────────────────────────────────────────────
+const map = L.map('map').setView([35.6500, 139.7000], 10);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
+
+// ─────────────────────────────────────────────
+//  ICON
+// ─────────────────────────────────────────────
+function makeIcon(type) {
+  const configs = {
+    outdoor: { bg:'#ff6b47', emoji:'☀' },
+    salon:   { bg:'#7c5cd8', emoji:'✦' },
+    user:    { bg:'#2a7fba', emoji:'＋' }
+  };
+  const c = configs[type] || configs.user;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="46" viewBox="0 0 36 46">
+    <filter id="sh${type}"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/></filter>
+    <path filter="url(#sh${type})" d="M18 2C9.163 2 2 9.163 2 18c0 11 16 26 16 26S34 29 34 18C34 9.163 26.837 2 18 2z" fill="${c.bg}"/>
+    <circle cx="18" cy="18" r="9" fill="white" opacity="0.95"/>
+    <text x="18" y="22" text-anchor="middle" font-size="10" font-family="system-ui" fill="${c.bg}">${c.emoji}</text>
+  </svg>`;
+  return L.divIcon({ html:svg, className:'', iconSize:[36,46], iconAnchor:[18,46], popupAnchor:[0,-48] });
+}
+
+// ─────────────────────────────────────────────
+//  POPUP HTML
+// ─────────────────────────────────────────────
+function buildPopup(spot) {
+  const iconType   = spot.preset ? spot.type : 'user';
+  const badgeColor = iconType === 'outdoor' ? '#ff6b47' : iconType === 'salon' ? '#7c5cd8' : '#2a7fba';
+  const badgeLabel = iconType === 'outdoor' ? '☀️ 屋外スポット' : iconType === 'salon' ? '💜 日サロ' : '👤 投稿スポット';
+  const stars      = spot.rating ? '★'.repeat(spot.rating) + '☆'.repeat(5 - spot.rating) : '';
+  const photoSrc   = spot.photo || '';
+
+  const photoHtml = photoSrc
+    ? `<div style="width:100%;height:140px;overflow:hidden;background:#111;">
+         <img src="${photoSrc}" alt="${spot.name}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" onerror="this.parentElement.style.display='none'" />
+       </div>`
+    : '';
+
+  return `
+    <div style="font-family:'Inter',system-ui,sans-serif;width:260px;overflow:hidden;">
+      ${photoHtml}
+      <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:12px 14px 10px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:#f7b731;line-height:1.2;">${spot.name}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:1px;margin-top:2px;">
+          ${spot.area || ''}
+          ${spot.pref ? `<span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px;background:${{tokyo:'#ff6b47',kanagawa:'#2a7fba',saitama:'#3a7d44',chiba:'#f7b731'}[spot.pref]||'#888'};color:${spot.pref==='chiba'?'#1a1a2e':'#fff'};">${{tokyo:'東京',kanagawa:'神奈川',saitama:'埼玉',chiba:'千葉'}[spot.pref]||''}</span>` : ''}
+        </div>
+      </div>
+      <div style="padding:12px 14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <span style="background:${badgeColor};color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">${badgeLabel}</span>
+          ${stars ? `<span style="color:#f7b731;font-size:12px;letter-spacing:1px;">${stars}</span>` : ''}
+        </div>
+        <div style="font-size:12px;color:#444;line-height:1.6;margin-bottom:8px;">${spot.memo || ''}</div>
+        ${spot.tips ? `<div style="font-size:11px;color:#666;background:#f7f8fa;border-radius:6px;padding:7px 9px;border-left:3px solid #f7b731;line-height:1.5;">💡 ${spot.tips}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────
+//  MARKERS
+// ─────────────────────────────────────────────
+const markers = {};
+let currentFilter = 'all';
+
+function addMarker(spot) {
+  const iconType = spot.preset ? spot.type : 'user';
+  const marker = L.marker([spot.lat, spot.lng], { icon: makeIcon(iconType) }).addTo(map);
+  marker.bindPopup(buildPopup(spot), { maxWidth: 280 });
+  marker.spotType = spot.type;
+  markers[spot.id] = marker;
+}
+
+// ─────────────────────────────────────────────
+//  LOCALSTORAGE
+// ─────────────────────────────────────────────
+function loadUserSpots() {
+  try { return JSON.parse(localStorage.getItem('yakilog_spots') || '[]'); }
+  catch { return []; }
+}
+function saveUserSpots(spots) {
+  localStorage.setItem('yakilog_spots', JSON.stringify(spots));
+}
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function renderAll() {
+  const all = [...PRESET_SPOTS, ...loadUserSpots()];
+  Object.values(markers).forEach(m => map.removeLayer(m));
+  Object.keys(markers).forEach(k => delete markers[k]);
+  let count = 0;
+  all.forEach(spot => {
+    const matchType = currentFilter === 'all' || spot.type === currentFilter;
+    const matchPref = !['tokyo','kanagawa','saitama','chiba'].includes(currentFilter) || spot.pref === currentFilter;
+    if (matchType && matchPref) {
+      addMarker(spot); count++;
+    }
+  });
+  document.getElementById('spot-count').textContent = `📍 ${count} SPOTS`;
+}
+renderAll();
+
+// ─────────────────────────────────────────────
+//  FILTER
+// ─────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentFilter = this.dataset.filter;
+    renderAll();
+  });
+});
+
+// ─────────────────────────────────────────────
+//  MAP CLICK → 緯度経度入力
+// ─────────────────────────────────────────────
+map.on('click', function(e) {
+  document.getElementById('f-lat').value = e.latlng.lat.toFixed(6);
+  document.getElementById('f-lng').value = e.latlng.lng.toFixed(6);
+  openModal();
+});
+
+// ─────────────────────────────────────────────
+//  PHOTO UPLOAD PREVIEW
+// ─────────────────────────────────────────────
+let photoDataUrl = null;
+
+document.getElementById('f-photo').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('画像は5MB以下にしてください。'); this.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    photoDataUrl = e.target.result;
+    const preview = document.getElementById('photo-preview');
+    preview.src = photoDataUrl;
+    preview.style.display = 'block';
+    document.querySelector('.upload-text').textContent = '✅ 写真を変更';
+  };
+  reader.readAsDataURL(file);
+});
+
+// ─────────────────────────────────────────────
+//  MODAL
+// ─────────────────────────────────────────────
+function openModal() { document.getElementById('modal-overlay').classList.add('open'); }
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  ['f-name','f-memo','f-lat','f-lng'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('f-type').value = 'outdoor';
+  document.getElementById('f-photo').value = '';
+  document.getElementById('photo-preview').style.display = 'none';
+  document.querySelector('.upload-text').textContent = '写真をタップして追加';
+  photoDataUrl = null;
+}
+
+document.getElementById('add-btn').addEventListener('click', openModal);
+document.getElementById('cancel-btn').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+document.getElementById('submit-btn').addEventListener('click', function() {
+  const name = document.getElementById('f-name').value.trim();
+  const type = document.getElementById('f-type').value;
+  const lat  = parseFloat(document.getElementById('f-lat').value);
+  const lng  = parseFloat(document.getElementById('f-lng').value);
+  const memo = document.getElementById('f-memo').value.trim();
+
+  if (!name) { alert('Spot name is required!'); return; }
+  if (isNaN(lat) || isNaN(lng)) { alert('Please enter valid coordinates.'); return; }
+  if (lat < 35.2 || lat > 36.2 || lng < 138.8 || lng > 140.5) {
+    if (!confirm('This location seems outside Tokyo. Add anyway?')) return;
+  }
+
+  const newSpot = {
+    id: 'u_' + Date.now(), name, type, lat, lng, memo,
+    area: '投稿スポット',
+    photo: photoDataUrl || '',
+    preset: false
+  };
+
+  const userSpots = loadUserSpots();
+  userSpots.push(newSpot);
+  saveUserSpots(userSpots);
+  closeModal();
+  renderAll();
+  map.setView([lat, lng], 15);
+  setTimeout(() => markers[newSpot.id] && markers[newSpot.id].openPopup(), 300);
+});
+</script>
+</body>
+</html>
