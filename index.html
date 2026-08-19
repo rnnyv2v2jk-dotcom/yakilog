@@ -5,464 +5,909 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>焼きログ — 関東 日焼けスポットマップ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
+    /* ══ RESET ══ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html {
-      height: 100%;
-      overflow: hidden;
-      touch-action: none;
-    }
-
-    body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      touch-action: none;
-    }
-
-    /* ── Carbon Design System トークン ── */
     :root {
-      --cds-background:        #ffffff;
-      --cds-layer-01:          #f4f4f4;
-      --cds-layer-02:          #ffffff;
-      --cds-border-subtle:     #e0e0e0;
-      --cds-border-strong:     #8d8d8d;
-      --cds-text-primary:      #161616;
-      --cds-text-secondary:    #525252;
-      --cds-text-placeholder:  #a8a8a8;
-      --cds-text-on-color:     #ffffff;
-      --cds-interactive:       #0f62fe;
-      --cds-interactive-hover: #0050e6;
-      --cds-focus:             #0f62fe;
-      --cds-support-error:     #da1e28;
-      --cds-support-success:   #198038;
-      --cds-support-warning:   #f1c21b;
-      --cds-support-info:      #0043ce;
-      /* アクセント（焼きログ固有） */
-      --yaki-sun:   #f1c21b;
-      --yaki-coral: #da1e28;
-      --yaki-ocean: #0043ce;
-      --yaki-green: #198038;
+      --kcc-dark:      #172d37;
+      --kcc-mid:       #2c5061;
+      --kcc-soft:      #678b9c;
+      --kcc-coral:     #ff6b3b;
+      --kcc-text:      #172d37;
+      --kcc-white:     #ffffff;
+      --kcc-header-bg: rgba(23,45,55,0.94);
+      /* ── イージング ── */
+      --ease-out-expo:   cubic-bezier(0.16, 1, 0.3, 1);   /* spring感 */
+      --ease-out-quart:  cubic-bezier(0.25, 1, 0.5, 1);   /* 滑らか減速 */
+      --ease-in-out:     cubic-bezier(0.37, 0, 0.63, 1);  /* 自然な往復 */
+      --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1); /* 少しバウンス */
+      --t-fast:    0.18s;
+      --t-base:    0.28s;
+      --t-slow:    0.48s;
+      --t-xslow:   0.65s;
+      --f-en:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --f-jp:  'Noto Sans JP', 'Hiragino Kaku Gothic ProN', YuGothic, sans-serif;
     }
 
+    html { height: 100%; overflow: hidden; scroll-behavior: smooth; }
     body {
-      font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', -apple-system, sans-serif;
-      background: var(--cds-background);
-      color: var(--cds-text-primary);
+      font-family: var(--f-jp);
+      background: #0e1c22;
+      color: var(--kcc-white);
       display: flex;
       flex-direction: column;
+      height: 100%;
+      overflow: hidden;
       font-size: 14px;
-      line-height: 1.42857;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
+    /* パネルのスムーズスクロール */
+    .tab-panel { scroll-behavior: smooth; }
 
     /* ══ HEADER ══ */
-    header {
-      height: 48px;
-      background: #161616;
+    #site-header {
+      height: 58px;
+      background: var(--kcc-header-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
+      padding: 0 24px;
       flex-shrink: 0;
-      z-index: 10;
+      z-index: 200;
     }
-    .header-left {
-      display: flex; align-items: center; gap: 0;
-      min-width: 0; flex: 1; overflow: hidden;
-    }
-
-    /* IBM 8px グリッド準拠のロゴ */
-    .logo-bar {
-      display: flex; align-items: center; gap: 8px;
-      min-width: 0; overflow: hidden;
-    }
-    /* IBM 8本バー風アイコン */
-    .ibm-icon {
-      width: 20px; height: 20px; flex-shrink: 0;
-      display: flex; flex-direction: column;
-      justify-content: space-between; padding: 1px 0;
-    }
-    .ibm-icon span {
-      display: block; height: 2px;
-      background: #f1c21b;
-    }
-    .ibm-icon span:nth-child(2),
-    .ibm-icon span:nth-child(4),
-    .ibm-icon span:nth-child(6) {
-      width: 68%;
-    }
-
-    .logo-wordmark {
-      font-family: 'IBM Plex Sans', sans-serif;
-      font-size: 16px; font-weight: 600;
-      color: #ffffff; letter-spacing: 0;
-      line-height: 1;
-      white-space: nowrap;
-    }
-    .logo-wordmark span { color: #f1c21b; }
-    .logo-divider {
-      width: 1px; height: 20px;
-      background: #393939; margin: 0 12px;
-      flex-shrink: 0;
-    }
-    .logo-product {
-      font-family: 'IBM Plex Sans', sans-serif;
-      font-size: 13px; font-weight: 300;
-      color: #c6c6c6; letter-spacing: 0.01em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    #add-btn {
-      height: 32px;
-      padding: 0 15px;
-      background: var(--cds-interactive);
-      color: #fff;
-      border: none;
-      font-family: 'IBM Plex Sans', sans-serif;
-      font-size: 14px; font-weight: 400;
-      cursor: pointer;
-      letter-spacing: 0.16px;
-      transition: background 0.1s;
-      white-space: nowrap;
-    }
-    #add-btn:hover { background: var(--cds-interactive-hover); }
-
-    /* ══ FILTER BAR — Carbon Tab Bar ══ */
-    #filter-bar {
+    .header-logo {
       display: flex;
-      flex-shrink: 0;
-      z-index: 10;
-      background: #161616;
-      border-bottom: 1px solid #393939;
-      overflow-x: auto;
-      scrollbar-width: none;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      transition: opacity var(--t-base) var(--ease-out-quart),
+                  transform var(--t-base) var(--ease-out-quart);
     }
-    #filter-bar::-webkit-scrollbar { display: none; }
+    .header-logo:hover { opacity: 0.8; transform: translateX(2px); }
+    .logo-mark {
+      width: 30px; height: 30px;
+      background: var(--kcc-coral);
+      border-radius: 3px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .logo-ja {
+      font-family: var(--f-jp);
+      font-size: 15px; font-weight: 700;
+      color: var(--kcc-white);
+      letter-spacing: 0.07em; line-height: 1;
+      display: block;
+    }
+    .logo-en {
+      font-family: var(--f-en);
+      font-size: 9px; font-weight: 400;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      line-height: 1; display: block;
+      margin-top: 2px;
+    }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .hdr-btn {
+      height: 32px; padding: 0 16px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.75);
+      font-family: var(--f-jp);
+      font-size: 12px; font-weight: 400;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      border-radius: 2px;
+      transition: all var(--t-base) var(--ease-out-quart);
+      white-space: nowrap;
+    }
+    .hdr-btn:hover {
+      border-color: rgba(255,255,255,0.45);
+      color: var(--kcc-white);
+      background: rgba(255,255,255,0.05);
+      transform: translateY(-1px);
+    }
+    .hdr-btn:active { transform: scale(0.97) translateY(0); transition-duration: var(--t-fast); }
+    .hdr-btn.primary {
+      background: var(--kcc-coral);
+      border-color: var(--kcc-coral);
+      color: var(--kcc-white);
+    }
+    .hdr-btn.primary:hover { background: #e85929; border-color: #e85929; transform: translateY(-1px); }
+    .hdr-btn.primary:active { transform: scale(0.97); transition-duration: var(--t-fast); }
 
-    /* ══ MAP WRAP ══ */
-    #map-wrap {
-      flex: 1;
-      position: relative;
-      min-height: 0;
-      overflow: hidden;
-      touch-action: auto;
+    /* ══ TAB NAV ══ */
+    #tab-nav {
+      height: 46px;
+      background: rgba(18,35,44,0.97);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: stretch;
+      flex-shrink: 0; z-index: 150;
+      overflow-x: auto; scrollbar-width: none;
+      padding: 0 8px;
     }
-    #map {
-      position: absolute; inset: 0; z-index: 0;
-      touch-action: auto;
-    }
-
-    .filter-btn {
-      flex-shrink: 0;
+    #tab-nav::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0 18px;
+      background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
-      padding: 0 16px;
-      height: 40px;
-      font-family: 'IBM Plex Sans', sans-serif;
-      font-size: 14px; font-weight: 400;
-      cursor: pointer;
-      background: transparent;
-      color: #8d8d8d;
-      transition: color 0.1s, border-color 0.1s;
-      white-space: nowrap;
-      letter-spacing: 0.16px;
+      color: rgba(255,255,255,0.38);
+      font-family: var(--f-jp);
+      font-size: 12px; font-weight: 400;
+      letter-spacing: 0.06em;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+      transition: color var(--t-base) var(--ease-out-quart),
+                  border-color var(--t-base) var(--ease-out-quart),
+                  background var(--t-base) var(--ease-out-quart);
+      position: relative;
     }
-    .filter-btn:hover { color: #f4f4f4; background: #2d2d2d; }
-    .filter-btn.active {
-      color: #f4f4f4;
-      border-bottom-color: var(--cds-interactive);
+    .tab-icon {
+      font-size: 13px; opacity: 0.7;
+      transition: opacity var(--t-base) var(--ease-out-quart),
+                  transform var(--t-base) var(--ease-spring);
+    }
+    .tab-btn:hover { color: rgba(255,255,255,0.72); background: rgba(255,255,255,0.03); }
+    .tab-btn:hover .tab-icon { opacity: 1; transform: scale(1.15); }
+    .tab-btn.active { color: var(--kcc-white); border-bottom-color: var(--kcc-coral); }
+    .tab-btn.active .tab-icon { opacity: 1; transform: scale(1.1); }
+
+    /* ══ APP CONTAINER ══ */
+    #app { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+
+    /* ══ TAB PANELS ══ */
+    .tab-panel {
+      position: absolute; inset: 0;
+      opacity: 0; pointer-events: none;
+      transform: translateY(12px);
+      transition: opacity var(--t-slow) var(--ease-out-expo),
+                  transform var(--t-slow) var(--ease-out-expo);
+      overflow-y: auto;
+      will-change: opacity, transform;
+    }
+    .tab-panel.active {
+      opacity: 1; pointer-events: all; transform: translateY(0);
+    }
+    #panel-map { overflow: hidden; }
+
+    /* ══ MAP ══ */
+    #map-wrap { position: absolute; inset: 0; overflow: hidden; touch-action: auto; }
+    #map { position: absolute; inset: 0; z-index: 0; touch-action: auto; }
+
+    #sun-orbit-svg {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 500; overflow: visible;
+      display: none;
     }
 
-    /* ══ SPOT COUNT ══ */
-    #spot-count {
-      position: absolute; bottom: 32px; right: 10px;
-      background: #161616;
-      border-left: 3px solid var(--cds-interactive);
-      padding: 6px 14px 6px 11px;
-      font-family: 'IBM Plex Sans', sans-serif;
-      font-size: 12px; font-weight: 400;
-      letter-spacing: 0.32px;
-      color: #c6c6c6;
+    /* 地図ボタン群 */
+    #map-btns {
+      position: absolute; bottom: 78px; right: 12px;
+      display: flex; flex-direction: column; gap: 5px;
       z-index: 1000;
     }
+    .map-btn {
+      width: 38px; height: 38px;
+      background: rgba(18,35,44,0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 2px;
+      color: rgba(255,255,255,0.55);
+      font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--t-base) var(--ease-out-quart),
+                  transform var(--t-base) var(--ease-spring);
+    }
+    .map-btn:hover {
+      background: rgba(44,80,97,0.9);
+      border-color: rgba(255,255,255,0.22);
+      color: var(--kcc-white);
+      transform: scale(1.07);
+    }
+    .map-btn:active { transform: scale(0.94); transition-duration: var(--t-fast); }
+    .map-btn.active {
+      background: rgba(255,107,59,0.12);
+      border-color: var(--kcc-coral);
+      color: var(--kcc-coral);
+      transform: scale(1.05);
+    }
+    .map-btn.locating {
+      color: var(--kcc-coral);
+      animation: pulse 1.2s var(--ease-in-out) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.6; transform: scale(0.92); }
+    }
 
-    /* ══ LEGEND ══ */
+    /* 軌道ヒントバナー */
+    #sun-orbit-hint {
+      position: absolute; bottom: 128px;
+      left: 50%; transform: translateX(-50%);
+      background: rgba(18,35,44,0.92);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,107,59,0.45);
+      color: var(--kcc-coral);
+      font-family: var(--f-jp);
+      font-size: 12px; letter-spacing: 0.04em;
+      padding: 7px 18px;
+      white-space: nowrap; z-index: 1001;
+      display: none; pointer-events: none;
+      border-radius: 2px;
+    }
+    #sun-orbit-hint.show { display: block; animation: hintIn 0.28s ease forwards; }
+    @keyframes hintIn {
+      from { opacity:0; transform:translateX(-50%) translateY(8px); }
+      to   { opacity:1; transform:translateX(-50%) translateY(0); }
+    }
+    #map-wrap.sun-orbit-mode #map { cursor: crosshair !important; }
+
+    /* スポット数 */
+    #spot-count {
+      position: absolute; bottom: 32px; right: 12px;
+      background: rgba(18,35,44,0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-left: 2px solid var(--kcc-coral);
+      padding: 5px 13px 5px 9px;
+      font-family: var(--f-en);
+      font-size: 11px; letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.5);
+      z-index: 1000; border-radius: 1px;
+    }
+
+    /* 凡例 */
     #legend {
-      position: absolute; bottom: 72px; left: 10px;
-      background: #161616;
-      border: 1px solid #393939;
+      position: absolute; bottom: 78px; left: 12px;
+      background: rgba(18,35,44,0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.07);
       padding: 10px 14px;
-      font-family: 'IBM Plex Sans', sans-serif;
-      font-size: 12px; z-index: 1000; line-height: 2;
+      font-family: var(--f-jp);
+      font-size: 11px; z-index: 1000;
+      line-height: 1.9; border-radius: 2px;
     }
     .legend-title {
-      font-size: 10px; font-weight: 600;
-      letter-spacing: 0.5px; text-transform: uppercase;
-      color: #6f6f6f; margin-bottom: 4px;
+      font-family: var(--f-en);
+      font-size: 9px; font-weight: 600;
+      letter-spacing: 0.38em; text-transform: uppercase;
+      color: rgba(255,255,255,0.25); margin-bottom: 5px;
     }
-    #legend .legend-item {
-      display: flex; align-items: center; gap: 8px;
-      color: #c6c6c6; font-weight: 400;
-    }
-    .dot { width: 8px; height: 8px; flex-shrink: 0; }
-    .dot-outdoor { background: var(--yaki-coral); }
-    .dot-salon   { background: #8a3ffc; }
-    .dot-user    { background: var(--cds-interactive); }
+    .legend-item { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.55); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-outdoor { background: var(--kcc-coral); }
+    .dot-salon   { background: #8a6bff; }
+    .dot-user    { background: #4aa8d8; }
 
-    /* ══ MODAL — Carbon Sheet ══ */
-    #modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(22,22,22,0.5); z-index: 2000;
-      align-items: flex-end; justify-content: center;
+    /* 気象パネル */
+    #weather-panel {
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(18,35,44,0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.07);
+      padding: 11px 15px;
+      font-family: var(--f-jp); font-size: 12px;
+      z-index: 1000; min-width: 148px; border-radius: 2px;
     }
-    #modal-overlay.open { display: flex; }
-    #modal {
-      background: var(--cds-layer-02);
-      border-top: 1px solid var(--cds-border-subtle);
-      padding: 0; width: 100%; max-width: 600px;
-      max-height: 92dvh; overflow-y: auto;
+    .wp-title {
+      font-family: var(--f-en); font-size: 9px; font-weight: 600;
+      letter-spacing: 0.35em; text-transform: uppercase;
+      color: rgba(255,255,255,0.28); margin-bottom: 9px;
     }
-    .modal-handle { display: none; }
-    .modal-header {
-      background: #161616;
-      padding: 16px;
-      border-bottom: 1px solid #393939;
-    }
-    .modal-header h2 {
-      font-family: 'IBM Plex Sans', sans-serif;
-      font-size: 20px; font-weight: 400;
-      color: #ffffff; letter-spacing: 0;
-    }
-    .modal-header p {
-      font-size: 12px; color: #6f6f6f;
-      margin-top: 2px; letter-spacing: 0.32px;
-    }
-    .modal-body { padding: 16px; }
-    .modal-hint {
-      font-size: 12px; color: var(--cds-text-secondary);
-      margin-bottom: 16px;
-      background: #edf5ff;
-      padding: 10px 14px;
-      border-left: 3px solid var(--cds-interactive);
-      line-height: 1.6;
-    }
-    .field { margin-bottom: 16px; }
-    .field label {
-      display: block; font-size: 12px; font-weight: 400;
-      margin-bottom: 8px; color: var(--cds-text-secondary);
-      letter-spacing: 0.32px;
-    }
-    .field input, .field select, .field textarea {
-      width: 100%;
-      border: none;
-      border-bottom: 1px solid var(--cds-border-strong);
-      padding: 11px 16px 11px 0;
-      font-size: 14px;
-      font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', sans-serif;
-      background: var(--cds-layer-01);
-      color: var(--cds-text-primary);
-      transition: border-color 0.1s, outline 0.1s;
-      letter-spacing: 0.16px;
-    }
-    .field input:focus, .field select:focus, .field textarea:focus {
-      outline: 2px solid var(--cds-focus);
-      outline-offset: -2px;
-      border-bottom-color: transparent;
-    }
-    .field textarea { resize: vertical; min-height: 80px; padding: 11px 16px; }
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
+    .wp-row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+    .wp-row:last-of-type { margin-bottom: 0; }
+    .wp-label { color: rgba(255,255,255,0.38); font-size: 10px; flex-shrink: 0; }
+    .wp-value { color: var(--kcc-white); font-size: 15px; font-weight: 500; font-family: var(--f-en); }
+    .wp-unit  { color: rgba(255,255,255,0.38); font-size: 10px; }
+    .uv-bar-wrap { flex: 1; height: 3px; background: rgba(255,255,255,0.08); overflow: hidden; border-radius: 2px; }
+    .uv-bar-fill { height: 100%; transition: width 0.5s ease; border-radius: 2px; }
+    .wp-hint { font-size: 10px; color: rgba(255,255,255,0.28); margin-top: 7px; letter-spacing: 0.03em; }
 
-    /* PHOTO UPLOAD */
-    .photo-upload-area {
-      border: 1px dashed var(--cds-border-strong);
-      padding: 24px 16px; text-align: center; cursor: pointer;
-      background: var(--cds-layer-01); position: relative;
-      transition: background 0.1s;
+    /* 太陽パネル（小） */
+    #sun-panel {
+      position: absolute; top: 12px; left: 12px;
+      background: rgba(18,35,44,0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.07);
+      padding: 11px 13px;
+      font-family: var(--f-jp); font-size: 11px;
+      z-index: 1000; min-width: 178px; border-radius: 2px;
     }
-    .photo-upload-area:hover { background: #e8e8e8; }
-    .photo-upload-area input[type="file"] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer;
-      width: 100%; height: 100%;
+    .sun-times { display: flex; justify-content: space-between; gap: 8px; margin-top: 7px; }
+    .sun-times span { text-align: center; }
+    .sun-times b {
+      display: block; color: var(--kcc-coral);
+      font-family: var(--f-en); font-size: 13px; font-weight: 500; line-height: 1;
     }
-    .photo-upload-area .upload-icon { font-size: 24px; margin-bottom: 8px; color: var(--cds-text-secondary); }
-    .photo-upload-area .upload-text { font-size: 14px; color: var(--cds-text-secondary); }
-    .photo-upload-area .upload-sub  { font-size: 12px; color: var(--cds-text-placeholder); margin-top: 4px; }
-    #photo-preview {
-      width: 100%; height: 140px; object-fit: cover;
-      display: none; margin-top: 8px;
-    }
+    .sun-times small { font-size: 9px; color: rgba(255,255,255,0.3); letter-spacing: 0.04em; }
 
-    .modal-actions { display: flex; gap: 1px; padding: 0; margin-top: 8px; }
-    .btn-cancel {
-      flex: 1; background: var(--cds-layer-01); border: none;
-      padding: 16px; font-size: 14px; font-weight: 400;
-      cursor: pointer; color: var(--cds-text-primary);
-      font-family: 'IBM Plex Sans', sans-serif;
-      letter-spacing: 0.16px;
-      transition: background 0.1s;
+    /* ツールチップ */
+    .sun-tooltip {
+      background: rgba(18,35,44,0.94) !important;
+      border: 1px solid rgba(255,107,59,0.35) !important;
+      color: var(--kcc-coral) !important;
+      font-family: var(--f-en) !important;
+      font-size: 11px !important;
+      padding: 4px 10px !important;
+      border-radius: 2px !important;
+      white-space: nowrap !important;
     }
-    .btn-cancel:hover { background: #e8e8e8; }
-    .btn-submit {
-      flex: 2;
-      background: var(--cds-interactive);
-      color: #fff; border: none; padding: 16px;
-      font-family: 'IBM Plex Sans', sans-serif;
-      font-size: 14px; font-weight: 400;
-      cursor: pointer; letter-spacing: 0.16px;
-      transition: background 0.1s;
-    }
-    .btn-submit:hover { background: var(--cds-interactive-hover); }
+    .sun-tooltip::before { display: none !important; }
 
-    /* ══ POPUP ══ */
+    /* ポップアップ */
     .leaflet-popup-content-wrapper {
-      border-radius: 0 !important;
-      padding: 0 !important;
-      overflow: hidden;
-      background: #ffffff !important;
-      border: 1px solid #e0e0e0 !important;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+      border-radius: 3px !important;
+      padding: 0 !important; overflow: hidden;
+      background: #1a2f3a !important;
+      border: 1px solid rgba(255,255,255,0.09) !important;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.45) !important;
       min-width: 280px !important;
     }
     .leaflet-popup-content { margin: 0 !important; width: auto !important; }
     .leaflet-popup-close-button {
-      color: #525252 !important; font-size: 16px !important;
-      padding: 8px 10px !important; top: 0 !important; right: 0 !important;
+      color: rgba(255,255,255,0.4) !important;
+      font-size: 18px !important;
+      padding: 8px 10px !important;
+      top: 0 !important; right: 0 !important;
+      transition: color var(--t-base);
     }
-    .leaflet-popup-tip { background: #ffffff !important; }
+    .leaflet-popup-close-button:hover { color: var(--kcc-white) !important; }
+    .leaflet-popup-tip { background: #1a2f3a !important; }
+
+    /* ══ MODAL ══ */
+    #modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(8,18,23,0.65);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      align-items: flex-end; justify-content: center;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal {
+      background: #182b35;
+      border-top: 1px solid rgba(255,255,255,0.09);
+      border-radius: 4px 4px 0 0;
+      width: 100%; max-width: 540px;
+      max-height: 90dvh; overflow-y: auto;
+      animation: slideUp var(--t-xslow) var(--ease-out-expo);
+      will-change: transform, opacity;
+    }
+    @keyframes slideUp {
+      from { transform:translateY(60px) scale(0.98); opacity:0; }
+      to   { transform:translateY(0) scale(1);       opacity:1; }
+    }
+    .modal-handle {
+      width: 34px; height: 3px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 2px; margin: 10px auto 0;
+    }
+    .modal-header {
+      padding: 16px 20px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .modal-header h2 {
+      font-family: var(--f-jp); font-size: 17px; font-weight: 500;
+      color: var(--kcc-white); letter-spacing: 0.05em;
+    }
+    .modal-header p {
+      font-family: var(--f-en); font-size: 10px;
+      color: rgba(255,255,255,0.28); margin-top: 3px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .modal-body { padding: 16px 20px; }
+    .modal-hint {
+      font-size: 12px; color: rgba(255,255,255,0.5);
+      margin-bottom: 16px;
+      background: rgba(74,168,216,0.08);
+      padding: 9px 13px;
+      border-left: 2px solid rgba(74,168,216,0.4);
+      letter-spacing: 0.03em; line-height: 1.6;
+      border-radius: 0 2px 2px 0;
+      transition: all 0.3s;
+    }
+    .field { margin-bottom: 15px; }
+    .field label {
+      display: block; font-size: 10px; font-weight: 400;
+      margin-bottom: 6px; color: rgba(255,255,255,0.35);
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%; border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.14);
+      padding: 9px 0; font-size: 14px;
+      font-family: var(--f-jp);
+      background: transparent; color: var(--kcc-white);
+      transition: border-color var(--t-base) var(--ease-out-quart),
+                  box-shadow var(--t-base) var(--ease-out-quart);
+      letter-spacing: 0.03em; outline: none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-bottom-color: var(--kcc-coral);
+      box-shadow: 0 2px 0 -1px rgba(255,107,59,0.3);
+    }
+    .field select option { background: #182b35; }
+    .field textarea { resize: vertical; min-height: 68px; padding: 9px 0; }
+    .photo-upload-area {
+      border: 1px dashed rgba(255,255,255,0.12);
+      padding: 18px; text-align: center;
+      cursor: pointer; background: rgba(255,255,255,0.02);
+      position: relative;
+      transition: all var(--t-base) var(--ease-out-quart);
+      border-radius: 2px;
+    }
+    .photo-upload-area:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.22);
+      transform: scale(1.005);
+    }
+    .photo-upload-area input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .upload-icon { font-size: 20px; margin-bottom: 5px; opacity: 0.38; }
+    .upload-text { font-size: 12px; color: rgba(255,255,255,0.4); }
+    .upload-sub  { font-size: 10px; color: rgba(255,255,255,0.22); margin-top: 3px; }
+    #photo-preview { width: 100%; height: 120px; object-fit: cover; display: none; margin-top: 8px; border-radius: 2px; }
+    .modal-actions { display: flex; gap: 1px; margin-top: 8px; }
+    .btn-cancel {
+      flex: 1; background: rgba(255,255,255,0.03);
+      border: none; padding: 14px;
+      font-size: 13px; cursor: pointer;
+      color: rgba(255,255,255,0.45);
+      font-family: var(--f-jp); letter-spacing: 0.06em;
+      transition: all var(--t-base) var(--ease-out-quart);
+    }
+    .btn-cancel:hover { background: rgba(255,255,255,0.07); color: var(--kcc-white); }
+    .btn-cancel:active { transform: scale(0.98); transition-duration: var(--t-fast); }
+    .btn-submit {
+      flex: 2; background: var(--kcc-coral);
+      color: var(--kcc-white); border: none; padding: 14px;
+      font-family: var(--f-jp); font-size: 13px; font-weight: 500;
+      cursor: pointer; letter-spacing: 0.08em;
+      transition: background var(--t-base) var(--ease-out-quart),
+                  transform var(--t-base) var(--ease-spring);
+    }
+    .btn-submit:hover { background: #e85929; transform: scale(1.01); }
+    .btn-submit:active { transform: scale(0.97); transition-duration: var(--t-fast); background: #d44d22; }
+
+    /* ══ SPOTS TAB ══ */
+    #panel-spots { background: #0e1c22; }
+    .section-hdr {
+      padding: 28px 24px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .section-hdr h2 {
+      font-family: var(--f-en); font-size: 20px; font-weight: 300;
+      letter-spacing: 0.12em; color: var(--kcc-white); text-transform: uppercase;
+    }
+    .section-hdr h2 em { color: var(--kcc-coral); font-style: normal; }
+    .section-hdr p { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 4px; letter-spacing: 0.06em; }
+
+    .spots-filter {
+      display: flex; gap: 0;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .spots-filter::-webkit-scrollbar { display: none; }
+    .sfbtn {
+      padding: 12px 16px; background: transparent;
+      border: none; border-bottom: 2px solid transparent;
+      color: rgba(255,255,255,0.32);
+      font-family: var(--f-jp); font-size: 12px; font-weight: 400;
+      cursor: pointer; white-space: nowrap;
+      transition: all var(--t-base); letter-spacing: 0.04em;
+    }
+    .sfbtn:hover { color: rgba(255,255,255,0.65); }
+    .sfbtn.active { color: var(--kcc-white); border-bottom-color: var(--kcc-coral); }
+
+    .spots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px; background: rgba(255,255,255,0.04); padding: 1px;
+    }
+    .spot-card {
+      background: #0e1c22; cursor: pointer;
+      transition: background var(--t-base) var(--ease-out-quart),
+                  transform var(--t-base) var(--ease-out-quart),
+                  box-shadow var(--t-base) var(--ease-out-quart);
+      overflow: hidden;
+    }
+    .spot-card:hover {
+      background: #162630;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      z-index: 1; position: relative;
+    }
+    .spot-card:active { transform: translateY(0) scale(0.99); transition-duration: var(--t-fast); }
+    .spot-card-img { width: 100%; height: 130px; object-fit: cover; display: block; }
+    .spot-card-placeholder {
+      width: 100%; height: 130px;
+      background: linear-gradient(135deg,#182b35,#2c5061);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; opacity: 0.4;
+    }
+    .spot-card-body { padding: 13px 16px 14px; }
+    .spot-card-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .stag {
+      font-size: 10px; font-weight: 500;
+      padding: 2px 7px; border-radius: 1px; letter-spacing: 0.04em;
+    }
+    .stag.outdoor { background: rgba(255,107,59,0.12); color: var(--kcc-coral); }
+    .stag.salon   { background: rgba(138,107,255,0.12); color: #a08fff; }
+    .stag.user    { background: rgba(74,168,216,0.12); color: #4aa8d8; }
+    .spref { font-size: 10px; color: rgba(255,255,255,0.28); letter-spacing: 0.04em; }
+    .spot-card-name {
+      font-size: 13px; font-weight: 500;
+      color: var(--kcc-white); line-height: 1.4;
+      letter-spacing: 0.03em; margin-bottom: 4px;
+    }
+    .spot-card-memo {
+      font-size: 11px; color: rgba(255,255,255,0.38);
+      line-height: 1.6; letter-spacing: 0.02em;
+      display: -webkit-box; -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2; overflow: hidden;
+    }
+    .spot-card-goto {
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 6px 14px 11px;
+      font-family: var(--f-en); font-size: 10px; letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.18);
+      transition: color var(--t-base);
+    }
+    .spot-card:hover .spot-card-goto { color: var(--kcc-coral); }
+
+    /* ══ WEATHER TAB ══ */
+    #panel-weather { background: #0e1c22; }
+    .weather-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1px; background: rgba(255,255,255,0.04); margin: 1px;
+    }
+    .weather-card { background: #0e1c22; padding: 22px; }
+    .wc-label {
+      font-family: var(--f-en); font-size: 9px; font-weight: 600;
+      letter-spacing: 0.32em; text-transform: uppercase;
+      color: rgba(255,255,255,0.28); margin-bottom: 10px;
+    }
+    .wc-value {
+      font-family: var(--f-en); font-size: 38px; font-weight: 200;
+      color: var(--kcc-white); line-height: 1; letter-spacing: -0.02em;
+    }
+    .wc-value span { font-size: 15px; font-weight: 400; color: rgba(255,255,255,0.38); margin-left: 3px; }
+    .wc-sub { font-size: 11px; color: rgba(255,255,255,0.32); margin-top: 7px; letter-spacing: 0.04em; }
+    .wc-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; margin-top: 9px; overflow: hidden; }
+    .wc-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+    .weather-arc-section {
+      padding: 22px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .was-label {
+      font-family: var(--f-en); font-size: 9px; font-weight: 600;
+      letter-spacing: 0.32em; text-transform: uppercase;
+      color: rgba(255,255,255,0.28); margin-bottom: 14px;
+    }
+    .weather-cta { padding: 22px 24px; }
+    .weather-cta p { font-size: 12px; color: rgba(255,255,255,0.35); line-height: 1.8; letter-spacing: 0.03em; }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 7px;
+      margin-top: 14px; padding: 9px 18px;
+      border: 1px solid rgba(255,107,59,0.4);
+      color: var(--kcc-coral); background: transparent;
+      font-family: var(--f-en); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px;
+      transition: all var(--t-base) var(--ease-out-quart),
+                  transform var(--t-base) var(--ease-spring);
+    }
+    .btn-outline:hover {
+      background: rgba(255,107,59,0.07);
+      border-color: var(--kcc-coral);
+      transform: translateY(-1px);
+    }
+    .btn-outline:active { transform: scale(0.97); transition-duration: var(--t-fast); }
+
+    /* ══ ABOUT TAB ══ */
+    #panel-about { background: #0e1c22; }
+    .about-hero {
+      padding: 44px 24px 32px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .eyebrow {
+      font-family: var(--f-en); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--kcc-coral); margin-bottom: 12px;
+    }
+    .about-hero h1 {
+      font-family: var(--f-jp); font-size: 24px; font-weight: 300;
+      color: var(--kcc-white); line-height: 1.55;
+      letter-spacing: 0.06em; margin-bottom: 14px;
+    }
+    .about-hero p { font-size: 13px; color: rgba(255,255,255,0.48); line-height: 1.9; letter-spacing: 0.03em; max-width: 500px; }
+    .about-section { padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .about-section:last-child { border-bottom: none; }
+    .asec-title {
+      font-family: var(--f-en); font-size: 9px; font-weight: 600;
+      letter-spacing: 0.3em; text-transform: uppercase;
+      color: rgba(255,255,255,0.28); margin-bottom: 14px;
+    }
+    .divider-accent { height: 1px; background: linear-gradient(to right, rgba(255,107,59,0.45), transparent); margin-bottom: 18px; }
+    .feature-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 1px; background: rgba(255,255,255,0.04); }
+    .feature-item {
+      background: #0e1c22; padding: 16px;
+      transition: background var(--t-base) var(--ease-out-quart),
+                  transform var(--t-base) var(--ease-out-quart);
+    }
+    .feature-item:hover { background: #152330; transform: translateY(-2px); }
+    .feature-item:active { transform: translateY(0); transition-duration: var(--t-fast); }
+    .fi-icon { font-size: 18px; margin-bottom: 8px; opacity: 0.75; }
+    .fi-title { font-size: 13px; font-weight: 500; color: var(--kcc-white); margin-bottom: 4px; letter-spacing: 0.03em; }
+    .fi-desc { font-size: 11px; color: rgba(255,255,255,0.32); line-height: 1.7; letter-spacing: 0.02em; }
+    .howto-list { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 2; letter-spacing: 0.03em; }
+    .howto-list p { display: flex; gap: 10px; align-items: baseline; }
+    .howto-num { color: var(--kcc-coral); font-family: var(--f-en); font-size: 11px; font-weight: 600; flex-shrink: 0; }
+    .data-list { font-size: 11px; color: rgba(255,255,255,0.28); line-height: 1.9; letter-spacing: 0.03em; }
 
     /* ══ FOOTER ══ */
-    footer {
-      text-align: center; font-size: 12px;
-      color: #6f6f6f;
-      padding: 6px 16px; letter-spacing: 0.32px;
-      background: #161616; flex-shrink: 0;
-      border-top: 1px solid #393939;
-      font-family: 'IBM Plex Sans', sans-serif;
+    #site-footer {
+      text-align: center;
+      font-family: var(--f-en); font-size: 10px;
+      color: rgba(255,255,255,0.18); padding: 7px 16px;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      background: rgba(18,35,44,0.97); flex-shrink: 0;
+      border-top: 1px solid rgba(255,255,255,0.04);
     }
 
-    /* ══════════════════════════════
-       MOBILE  (max-width: 640px)
-    ══════════════════════════════ */
+    /* ══ MOBILE ══ */
     @media (max-width: 640px) {
-
-      /* ヘッダー: サブタイトルを隠してコンパクトに */
-      .logo-divider,
-      .logo-product { display: none; }
-
-      header { padding: 0 12px; height: 44px; }
-
-      #add-btn {
-        font-size: 12px;
-        padding: 0 10px;
-        height: 28px;
-      }
-
-      /* フィルターバー: ボタンを小さく */
-      .filter-btn {
-        font-size: 12px;
-        padding: 0 12px;
-        height: 36px;
-      }
-
-      /* legend: 小さく */
-      #legend {
-        font-size: 11px;
-        padding: 8px 12px;
-        line-height: 1.8;
-        bottom: 60px;
-        left: 8px;
-      }
-
-      /* spot-count */
-      #spot-count {
-        font-size: 11px;
-        padding: 5px 10px 5px 9px;
-        bottom: 28px;
-        right: 8px;
-      }
-
-      /* モーダル: スマホ画面に収める */
-      #modal {
-        max-height: 85svh;
-        max-height: 85vh; /* fallback */
-      }
-
-      .modal-header h2 { font-size: 17px; }
-      .modal-body { padding: 12px; }
-      .modal-hint { font-size: 12px; padding: 8px 12px; }
-
-      .field { margin-bottom: 12px; }
-      .field input, .field select, .field textarea {
-        font-size: 16px; /* iOS で自動ズームを防ぐ */
-        padding: 10px 12px 10px 0;
-      }
-
-      .btn-cancel, .btn-submit {
-        padding: 14px 8px;
-        font-size: 14px;
-      }
-
-      /* ポップアップ */
-      .leaflet-popup-content-wrapper {
-        min-width: 240px !important;
-        max-width: calc(100vw - 48px) !important;
-      }
-
-      /* フッター非表示（画面が狭いため） */
-      footer { display: none; }
+      #site-header { height: 50px; padding: 0 14px; }
+      .logo-en { display: none; }
+      .hdr-btn { font-size: 12px; padding: 0 11px; height: 29px; }
+      #tab-nav { height: 40px; padding: 0 2px; }
+      .tab-btn { font-size: 12px; padding: 0 12px; }
+      .tab-icon { display: none; }
+      #map-btns { bottom: 62px; right: 9px; gap: 4px; }
+      .map-btn { width: 34px; height: 34px; font-size: 14px; }
+      #spot-count { bottom: 24px; right: 9px; font-size: 10px; }
+      #legend { bottom: 62px; left: 9px; font-size: 10px; padding: 7px 10px; }
+      #weather-panel { top: 9px; right: 9px; min-width: 115px; padding: 8px 10px; }
+      #sun-panel { top: 9px; left: 9px; min-width: 0; padding: 8px 10px; }
+      #sun-orbit-hint { font-size: 11px; bottom: 108px; }
+      .section-hdr { padding: 18px 14px 13px; }
+      .section-hdr h2 { font-size: 17px; }
+      .spots-filter { padding: 0 6px; }
+      .spots-grid { grid-template-columns: 1fr; }
+      .weather-grid { grid-template-columns: 1fr; }
+      .weather-card { padding: 16px; }
+      .wc-value { font-size: 30px; }
+      .weather-arc-section { padding: 16px; }
+      .weather-cta { padding: 16px; }
+      .about-hero { padding: 26px 14px 22px; }
+      .about-hero h1 { font-size: 20px; }
+      .about-section { padding: 18px 14px; }
+      .feature-list { grid-template-columns: 1fr 1fr; }
+      #modal { max-height: 88svh; }
+      .modal-header { padding: 13px 16px 11px; }
+      .modal-header h2 { font-size: 15px; }
+      .modal-body { padding: 13px 16px; }
+      .btn-cancel, .btn-submit { padding: 12px; }
+      .leaflet-popup-content-wrapper { min-width: 230px !important; max-width: calc(100vw - 36px) !important; }
+      #site-footer { display: none; }
     }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="header-left">
-    <div class="logo-bar">
-      <div class="ibm-icon">
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
-        <span></span><span></span>
-      </div>
-      <div class="logo-wordmark">焼き<span>ログ</span></div>
-      <div class="logo-divider"></div>
-      <div class="logo-product">関東 日焼けスポットマップ</div>
+<!-- HEADER -->
+<header id="site-header">
+  <a class="header-logo" href="#">
+    <div class="logo-mark">☀</div>
+    <div>
+      <span class="logo-ja">焼きログ</span>
+      <span class="logo-en">Kanto Tan Spot Map</span>
     </div>
+  </a>
+  <div class="header-actions">
+    <button class="hdr-btn primary" id="add-btn">+ スポットを追加</button>
   </div>
-  <button id="add-btn">スポットを追加</button>
 </header>
 
-<div id="filter-bar">
-  <button class="filter-btn active" data-filter="all">すべて</button>
-  <button class="filter-btn" data-filter="outdoor">☀ 屋外スポット</button>
-  <button class="filter-btn" data-filter="salon">✦ 日サロ</button>
-</div>
+<!-- TAB NAV -->
+<nav id="tab-nav">
+  <button class="tab-btn active" data-tab="map">
+    <span class="tab-icon">🗺</span>マップ
+  </button>
+  <button class="tab-btn" data-tab="spots">
+    <span class="tab-icon">📍</span>スポット一覧
+  </button>
+  <button class="tab-btn" data-tab="weather">
+    <span class="tab-icon">☀</span>天気 &amp; 太陽
+  </button>
+  <button class="tab-btn" data-tab="about">
+    <span class="tab-icon">◎</span>焼きログとは
+  </button>
+</nav>
 
-<div id="map-wrap">
-  <div id="map"></div>
+<!-- APP -->
+<div id="app">
 
-  <div id="legend">
-    <div class="legend-title">Legend</div>
-    <div class="legend-item"><div class="dot dot-outdoor"></div>屋外スポット</div>
-    <div class="legend-item"><div class="dot dot-salon"></div>日サロ</div>
-    <div class="legend-item"><div class="dot dot-user"></div>投稿スポット</div>
+  <!-- MAP TAB -->
+  <div class="tab-panel active" id="panel-map">
+    <div id="map-wrap">
+      <div id="map"></div>
+      <svg id="sun-orbit-svg"></svg>
+
+      <!-- 太陽パネル(小) -->
+      <div id="sun-panel">
+        <div class="wp-title">Sun Path</div>
+        <svg id="sun-arc-svg" width="152" height="54" viewBox="0 0 152 54" style="display:block;margin:0 auto 3px;">
+          <line x1="8" y1="49" x2="144" y2="49" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <path id="sun-arc-path" d="M8,49 A68,49 0 0,1 144,49" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+          <path id="sun-arc-progress" d="" fill="none" stroke="var(--kcc-coral)" stroke-width="2" stroke-linecap="round"/>
+          <circle id="sun-pos-dot" cx="76" cy="0" r="4" fill="var(--kcc-coral)" opacity="0"/>
+        </svg>
+        <div class="sun-times">
+          <span><b id="sun-rise">--:--</b><small>日の出</small></span>
+          <span><b id="sun-noon">--:--</b><small>南中</small></span>
+          <span><b id="sun-set">--:--</b><small>日の入</small></span>
+        </div>
+      </div>
+
+      <!-- 気象パネル -->
+      <div id="weather-panel">
+        <div class="wp-title">Weather</div>
+        <div class="wp-row">
+          <span class="wp-label">気温</span>
+          <span class="wp-value" id="wp-temp">--</span>
+          <span class="wp-unit">°C</span>
+        </div>
+        <div class="wp-row">
+          <span class="wp-label">UV</span>
+          <span class="wp-value" id="wp-uv">--</span>
+          <div class="uv-bar-wrap"><div class="uv-bar-fill" id="uv-bar" style="width:0%;background:var(--kcc-coral);"></div></div>
+        </div>
+        <div class="wp-hint" id="wp-hint">⊙ ボタンで更新</div>
+      </div>
+
+      <!-- 軌道ヒント -->
+      <div id="sun-orbit-hint">☀ 軌道を表示する地点をタップ</div>
+
+      <!-- 地図ボタン -->
+      <div id="map-btns">
+        <button class="map-btn" id="sun-toggle-btn" title="太陽軌道モード">☀</button>
+        <button class="map-btn" id="locate-btn" title="現在地を表示">⊙</button>
+      </div>
+
+      <!-- 凡例 -->
+      <div id="legend">
+        <div class="legend-title">Legend</div>
+        <div class="legend-item"><div class="dot dot-outdoor"></div>屋外スポット</div>
+        <div class="legend-item"><div class="dot dot-salon"></div>日サロ</div>
+        <div class="legend-item"><div class="dot dot-user"></div>投稿スポット</div>
+      </div>
+      <div id="spot-count"></div>
+    </div>
   </div>
 
-  <div id="spot-count"></div>
-</div>
+  <!-- SPOTS TAB -->
+  <div class="tab-panel" id="panel-spots">
+    <div class="section-hdr">
+      <h2>Spot <em>List</em></h2>
+      <p>関東エリアの日焼けスポット一覧</p>
+    </div>
+    <div class="spots-filter">
+      <button class="sfbtn active" data-sfilter="all">すべて</button>
+      <button class="sfbtn" data-sfilter="outdoor">☀ 屋外</button>
+      <button class="sfbtn" data-sfilter="salon">✦ 日サロ</button>
+      <button class="sfbtn" data-sfilter="tokyo">東京</button>
+      <button class="sfbtn" data-sfilter="kanagawa">神奈川</button>
+      <button class="sfbtn" data-sfilter="saitama">埼玉</button>
+      <button class="sfbtn" data-sfilter="chiba">千葉</button>
+    </div>
+    <div class="spots-grid" id="spots-grid"></div>
+  </div>
 
+  <!-- WEATHER TAB -->
+  <div class="tab-panel" id="panel-weather">
+    <div class="section-hdr">
+      <h2>Weather <em>&amp; Sun</em></h2>
+      <p id="weather-location-label">⊙ ボタンで現在地を取得してください</p>
+    </div>
+    <div class="weather-grid">
+      <div class="weather-card">
+        <div class="wc-label">Temperature</div>
+        <div class="wc-value" id="wt-temp">--<span>°C</span></div>
+        <div class="wc-sub" id="wt-temp-sub">気温データなし</div>
+      </div>
+      <div class="weather-card">
+        <div class="wc-label">UV Index</div>
+        <div class="wc-value" id="wt-uv">--</div>
+        <div class="wc-bar"><div class="wc-bar-fill" id="wt-uv-bar" style="width:0%;background:var(--kcc-coral);"></div></div>
+        <div class="wc-sub" id="wt-uv-sub">UV指数データなし</div>
+      </div>
+    </div>
+    <div class="weather-arc-section">
+      <div class="was-label">Sun Path Today</div>
+      <svg id="sun-arc-svg-weather" viewBox="0 0 400 120" style="width:100%;max-width:400px;display:block;margin:0 auto;">
+        <line x1="20" y1="100" x2="380" y2="100" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+        <path d="M20,100 A180,100 0 0,1 380,100" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+        <path id="saw-progress" d="" fill="none" stroke="var(--kcc-coral)" stroke-width="2" stroke-linecap="round"/>
+        <circle id="saw-dot" cx="200" cy="0" r="5" fill="var(--kcc-coral)" opacity="0"/>
+      </svg>
+      <div style="display:flex;justify-content:space-between;font-family:var(--f-en);font-size:10px;color:rgba(255,255,255,0.28);margin-top:7px;letter-spacing:0.06em;padding:0 2px;">
+        <span id="saw-rise">日の出 --:--</span>
+        <span id="saw-noon">南中 --:--</span>
+        <span id="saw-set">日の入 --:--</span>
+      </div>
+    </div>
+    <div class="weather-cta">
+      <p>⊙ ボタンを押して現在地を取得すると、リアルタイムの気温・UV指数・太陽軌道が表示されます。</p>
+      <button class="btn-outline" id="weather-locate-btn">⊙ &nbsp;現在地を取得</button>
+    </div>
+  </div>
+
+  <!-- ABOUT TAB -->
+  <div class="tab-panel" id="panel-about">
+    <div class="about-hero">
+      <div class="eyebrow">About Yakilog</div>
+      <h1>日焼けを、もっと<br>スマートに。</h1>
+      <p>焼きログは、関東エリアの日焼けスポットをマッピングしたアプリです。屋外スポットから日サロまで、あなたの「焼き活」をサポートします。</p>
+    </div>
+    <div class="about-section">
+      <div class="asec-title">Features</div>
+      <div class="divider-accent"></div>
+      <div class="feature-list">
+        <div class="feature-item"><div class="fi-icon">🗺</div><div class="fi-title">スポットマップ</div><div class="fi-desc">関東全域の日焼けスポットを地図上で確認できます。</div></div>
+        <div class="feature-item"><div class="fi-icon">☀</div><div class="fi-title">太陽軌道</div><div class="fi-desc">任意の地点の太陽軌道をリアルタイムで可視化します。</div></div>
+        <div class="feature-item"><div class="fi-icon">🌡</div><div class="fi-title">気温・UV指数</div><div class="fi-desc">現在地の気温とUV指数をリアルタイムで取得します。</div></div>
+        <div class="feature-item"><div class="fi-icon">📍</div><div class="fi-title">スポット投稿</div><div class="fi-desc">お気に入りのスポットを地図に追加できます。</div></div>
+      </div>
+    </div>
+    <div class="about-section">
+      <div class="asec-title">How to Use</div>
+      <div class="divider-accent"></div>
+      <div class="howto-list">
+        <p><span class="howto-num">01</span>マップタブで日焼けスポットを探す</p>
+        <p><span class="howto-num">02</span>⊙ボタンで現在地を取得して周辺スポットを確認</p>
+        <p><span class="howto-num">03</span>☀ボタンで太陽軌道モードをON → 地図をタップして軌道を確認</p>
+        <p><span class="howto-num">04</span>「+ スポットを追加」で新しいスポットを投稿</p>
+      </div>
+    </div>
+    <div class="about-section">
+      <div class="asec-title">Data Sources</div>
+      <div class="divider-accent"></div>
+      <div class="data-list">
+        <p>地図: © OpenStreetMap contributors © CARTO</p>
+        <p>気象データ: Open-Meteo API（無料・オープンソース）</p>
+        <p>スポットデータ: 独自調査・ユーザー投稿</p>
+      </div>
+    </div>
+    <div style="text-align:center;padding:28px 24px;font-family:var(--f-en);font-size:10px;color:rgba(255,255,255,0.14);letter-spacing:0.16em;text-transform:uppercase;">
+      Yakilog &nbsp;·&nbsp; Made with IBM Bob
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- MODAL -->
 <div id="modal-overlay">
   <div id="modal">
     <div class="modal-handle"></div>
     <div class="modal-header">
       <h2>スポットを追加</h2>
-      <p>Add your favorite tan spot to the map</p>
+      <p>Add your favorite tan spot</p>
     </div>
     <div class="modal-body">
-      <div class="modal-hint">
+      <div class="modal-hint" id="modal-hint-text">
         地図をタップして場所を指定してから、スポット名を入力してください。
       </div>
       <div class="field">
@@ -476,7 +921,6 @@
           <option value="salon">✦ 日サロ</option>
         </select>
       </div>
-      <!-- 座標は非表示（地図タップで自動セット） -->
       <input type="hidden" id="f-lat" />
       <input type="hidden" id="f-lng" />
       <div class="field">
@@ -501,7 +945,7 @@
   </div>
 </div>
 
-<footer>焼きログ &nbsp;·&nbsp; Made with IBM Bob</footer>
+<footer id="site-footer">Yakilog &nbsp;·&nbsp; Made with IBM Bob</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -1501,30 +1945,190 @@ function renderAll() {
 renderAll();
 
 // ─────────────────────────────────────────────
-//  FILTER
+//  TAB NAVIGATION
 // ─────────────────────────────────────────────
-document.querySelectorAll('.filter-btn').forEach(btn => {
+document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
   btn.addEventListener('click', function() {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     this.classList.add('active');
-    currentFilter = this.dataset.filter;
-    renderAll();
+    const panel = document.getElementById('panel-' + this.dataset.tab);
+    if (panel) panel.classList.add('active');
+    // スポット一覧タブを開いたら描画
+    if (this.dataset.tab === 'spots') renderSpotsList('all');
   });
 });
 
 // ─────────────────────────────────────────────
-//  MAP CLICK → 座標をセット（モーダルは開かない）
+//  SPOTS LIST TAB
 // ─────────────────────────────────────────────
-map.on('click', function(e) {
-  document.getElementById('f-lat').value = e.latlng.lat.toFixed(6);
-  document.getElementById('f-lng').value = e.latlng.lng.toFixed(6);
-  // 座標がセットされたことをヒントで示す
-  const hint = document.querySelector('.modal-hint');
+let spotsListFilter = 'all';
+
+function renderSpotsList(filter) {
+  spotsListFilter = filter;
+  const all = [...PRESET_SPOTS, ...loadUserSpots()];
+  const grid = document.getElementById('spots-grid');
+  if (!grid) return;
+
+  const filtered = all.filter(spot => {
+    if (filter === 'all') return true;
+    if (filter === 'outdoor' || filter === 'salon') return spot.type === filter;
+    return spot.pref === filter;
+  });
+
+  const prefNames = { tokyo:'東京', kanagawa:'神奈川', saitama:'埼玉', chiba:'千葉' };
+  grid.innerHTML = filtered.map(spot => {
+    const tagClass = spot.preset ? spot.type : 'user';
+    const tagLabel = tagClass === 'outdoor' ? '☀ 屋外' : tagClass === 'salon' ? '✦ 日サロ' : '投稿';
+    const pref = spot.pref ? `<span class="spref">${prefNames[spot.pref] || ''}</span>` : '';
+    const img = spot.photo
+      ? `<img class="spot-card-img" src="${spot.photo}" alt="${spot.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      : '';
+    const placeholder = `<div class="spot-card-placeholder"${spot.photo ? ' style="display:none"' : ''}>☀</div>`;
+    return `
+      <div class="spot-card" onclick="goToSpot(${spot.lat},${spot.lng},'${spot.id}')">
+        ${img}${placeholder}
+        <div class="spot-card-body">
+          <div class="spot-card-meta">
+            <span class="stag ${tagClass}">${tagLabel}</span>${pref}
+          </div>
+          <div class="spot-card-name">${spot.name}</div>
+          <div class="spot-card-memo">${spot.memo || spot.area || ''}</div>
+        </div>
+        <div class="spot-card-goto">MAP →</div>
+      </div>`;
+  }).join('');
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div style="padding:32px 24px;font-size:13px;color:rgba(255,255,255,0.3);letter-spacing:0.04em;">該当するスポットがありません</div>`;
+  }
+}
+
+function goToSpot(lat, lng, id) {
+  // マップタブに切り替えてそのスポットを表示
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="map"]').classList.add('active');
+  document.getElementById('panel-map').classList.add('active');
+  map.setView([lat, lng], 15);
+  setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, 300);
+}
+
+// スポット一覧フィルター
+document.querySelectorAll('.sfbtn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.sfbtn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    renderSpotsList(this.dataset.sfilter);
+  });
+});
+
+// ─────────────────────────────────────────────
+//  MAP FILTER (マップタブのフィルターは廃止 → 地図上マーカーはすべて表示)
+// ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+//  太陽軌道モード
+// ─────────────────────────────────────────────
+let sunOrbitMode    = false;   // ON/OFF
+let orbitPinMarker  = null;    // 基準点マーカー
+
+function setSunOrbitMode(on) {
+  sunOrbitMode = on;
+  const btn  = document.getElementById('sun-toggle-btn');
+  const hint = document.getElementById('sun-orbit-hint');
+  const wrap = document.getElementById('map-wrap');
+  if (on) {
+    btn.classList.add('active');
+    hint.classList.add('show');
+    wrap.classList.add('sun-orbit-mode');
+  } else {
+    btn.classList.remove('active');
+    hint.classList.remove('show');
+    wrap.classList.remove('sun-orbit-mode');
+    // 軌道・ピンをクリア
+    clearSunOverlay();
+    if (orbitPinMarker) { map.removeLayer(orbitPinMarker); orbitPinMarker = null; }
+  }
+}
+
+document.getElementById('sun-toggle-btn').addEventListener('click', function() {
+  setSunOrbitMode(!sunOrbitMode);
+});
+
+// ─────────────────────────────────────────────
+//  逆ジオコーディング（座標 → 住所）
+// ─────────────────────────────────────────────
+// Nominatim APIで住所を取得。結果をキャッシュして重複リクエストを防ぐ。
+const _geocodeCache = {};
+
+async function reverseGeocode(lat, lng) {
+  const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+  if (_geocodeCache[key]) return _geocodeCache[key];
+  try {
+    const res  = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ja`,
+      { headers: { 'Accept-Language': 'ja' } }
+    );
+    const data = await res.json();
+    const a    = data.address || {};
+    // 市区町村 + 都道府県 の形式で返す
+    const city  = a.city || a.town || a.village || a.suburb || a.county || '';
+    const state = a.state || a.region || '';
+    const road  = a.road || a.neighbourhood || '';
+    let label = '';
+    if (city && state)  label = `${city}、${state}`;
+    else if (city)      label = city;
+    else if (state)     label = state;
+    else                label = data.display_name?.split(',')[0] || '不明な場所';
+    if (road && city)   label = `${road}付近、${city}`;
+    _geocodeCache[key] = label;
+    return label;
+  } catch {
+    return '不明な場所';
+  }
+}
+
+// ─────────────────────────────────────────────
+//  MAP CLICK → 軌道モードON時は軌道描画、OFFは従来通り
+// ─────────────────────────────────────────────
+map.on('click', async function(e) {
+  const lat = e.latlng.lat;
+  const lng = e.latlng.lng;
+
+  if (sunOrbitMode) {
+    // 軌道モード: 基準点ピンを置いて軌道を描画
+    if (orbitPinMarker) map.removeLayer(orbitPinMarker);
+    const pinIcon = L.divIcon({
+      html: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="30" viewBox="0 0 24 30">
+        <path d="M12 1C6.477 1 2 5.477 2 11c0 7 10 18 10 18S22 18 22 11C22 5.477 17.523 1 12 1z"
+          fill="#f1c21b" stroke="#a07800" stroke-width="1.2"/>
+        <text x="12" y="15" text-anchor="middle" font-size="10" fill="#161616">☀</text>
+      </svg>`,
+      className: '', iconSize: [24, 30], iconAnchor: [12, 30]
+    });
+    orbitPinMarker = L.marker([lat, lng], { icon: pinIcon, zIndexOffset: 600 }).addTo(map);
+    // まず仮表示してから住所取得後に更新
+    const hintEl = document.getElementById('sun-orbit-hint');
+    hintEl.textContent = '☀ 場所を取得中...';
+    drawSunOrbit(lat, lng);
+    updateSunPanel(lat, lng);
+    const addr = await reverseGeocode(lat, lng);
+    orbitPinMarker.bindTooltip(addr, { permanent: false, direction: 'top', offset: [0, -28] });
+    hintEl.textContent = `☀ ${addr} の太陽軌道`;
+    return;
+  }
+
+  // 通常モード: スポット追加用の座標セット
+  document.getElementById('f-lat').value = lat.toFixed(6);
+  document.getElementById('f-lng').value = lng.toFixed(6);
+  const hint = document.getElementById('modal-hint-text');
   if (hint) {
-    hint.textContent = `📍 場所を指定しました（${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}）`;
-    hint.style.borderLeftColor = '#198038';
-    hint.style.background = '#defbe6';
-    hint.style.color = '#198038';
+    hint.textContent = '📍 場所を取得中...';
+    hint.style.borderLeftColor = 'rgba(25,130,56,0.6)';
+    hint.style.background = 'rgba(25,130,56,0.08)';
+    hint.style.color = 'rgba(100,220,140,0.9)';
+    const addr = await reverseGeocode(lat, lng);
+    hint.textContent = `📍 ${addr} を指定しました`;
   }
 });
 
@@ -1559,8 +2163,16 @@ function closeModal() {
   document.getElementById('f-type').value = 'outdoor';
   document.getElementById('f-photo').value = '';
   document.getElementById('photo-preview').style.display = 'none';
-  document.querySelector('.upload-text').textContent = '写真をタップして追加';
+  document.querySelector('.upload-text').textContent = 'クリックして写真を追加';
   photoDataUrl = null;
+  // ヒントをリセット
+  const hint = document.getElementById('modal-hint-text');
+  if (hint) {
+    hint.textContent = '地図をタップして場所を指定してから、スポット名を入力してください。';
+    hint.style.borderLeftColor = '';
+    hint.style.background = '';
+    hint.style.color = '';
+  }
 }
 
 document.getElementById('add-btn').addEventListener('click', openModal);
@@ -1593,6 +2205,598 @@ document.getElementById('submit-btn').addEventListener('click', function() {
   renderAll();
   map.setView([lat, lng], 15);
   setTimeout(() => markers[newSpot.id] && markers[newSpot.id].openPopup(), 300);
+});
+
+// ─────────────────────────────────────────────
+//  現在地 / 気象 / 太陽軌道
+// ─────────────────────────────────────────────
+
+let locateMarker = null;
+let sunDotMarker = null;
+let sunAnimTimer = null;
+
+// ── 天文計算 ─────────────────────────────────
+
+// 太陽の赤緯（ラジアン）
+function sunDeclination(dayOfYear) {
+  return -0.4093 * Math.cos(2 * Math.PI * (dayOfYear + 10) / 365);
+}
+
+// 太陽の時角 h（ラジアン）から方位角・高度を計算
+// φ=緯度(rad), δ=赤緯(rad), h=時角(rad)
+// 戻り値: { az: 方位角(度, 北=0, 東=90), alt: 高度(度) }
+function sunPosition(phi, delta, h) {
+  const sinAlt = Math.sin(phi)*Math.sin(delta) + Math.cos(phi)*Math.cos(delta)*Math.cos(h);
+  const alt    = Math.asin(Math.max(-1, Math.min(1, sinAlt)));
+
+  const cosAz  = (Math.sin(delta) - Math.sin(phi)*sinAlt) / (Math.cos(phi)*Math.cos(alt));
+  let az       = Math.acos(Math.max(-1, Math.min(1, cosAz))) * 180 / Math.PI;
+  if (Math.sin(h) > 0) az = 360 - az; // 午後は反転
+
+  return { az, alt: alt * 180 / Math.PI };
+}
+
+// dayOfYear と緯度・経度から1日分の太陽位置を計算
+// stepMin: 計算間隔（分）, 戻り値: [{jstH, az, alt}]
+function calcDaySunPath(lat, lng, stepMin) {
+  const now   = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const doy   = Math.floor((now - start) / 86400000);
+
+  const phi   = lat * Math.PI / 180;
+  const delta = sunDeclination(doy);
+  const B     = 2 * Math.PI * (doy - 81) / 364;
+  const eot   = 9.87*Math.sin(2*B) - 7.53*Math.cos(B) - 1.5*Math.sin(B); // 分
+  // 均時差＋経度補正: UTC正午から真太陽時正午(JST)へのオフセット
+  const solarNoonJST = 12 - lng/15 - eot/60 + 9;
+
+  const result = [];
+  for (let minOfDay = 0; minOfDay < 1440; minOfDay += stepMin) {
+    const jstH = minOfDay / 60;
+    // 時角 h (ラジアン): 正午=0, 午前=負, 午後=正
+    const h = (jstH - solarNoonJST) * Math.PI / 12;
+    const pos = sunPosition(phi, delta, h);
+    result.push({ jstH, az: pos.az, alt: pos.alt });
+  }
+  return result;
+}
+
+// 日の出・南中・日の入り（JST）
+function calcSunTimes(lat, lng) {
+  const now   = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const doy   = Math.floor((now - start) / 86400000);
+
+  const phi    = lat * Math.PI / 180;
+  const delta  = sunDeclination(doy);
+  const cosH0  = -Math.tan(phi) * Math.tan(delta);
+  if (Math.abs(cosH0) > 1) return null;
+
+  const h0h     = Math.acos(cosH0) * 12 / Math.PI;
+  const B       = 2 * Math.PI * (doy - 81) / 364;
+  const eot     = 9.87*Math.sin(2*B) - 7.53*Math.cos(B) - 1.5*Math.sin(B);
+  const noonJST = 12 - lng/15 - eot/60 + 9;
+
+  function toDate(h) {
+    const d = new Date(now); d.setHours(0,0,0,0);
+    d.setTime(d.getTime() + h*3600000); return d;
+  }
+  return {
+    rise: toDate(noonJST - h0h), riseH: noonJST - h0h,
+    noon: toDate(noonJST),       noonH: noonJST,
+    set:  toDate(noonJST + h0h), setH:  noonJST + h0h
+  };
+}
+
+function fmtTime(d) {
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+// ── 地図上の太陽軌道描画 ──────────────────────
+
+// 方位角・距離(km)から地理座標へ変換（等距離方位図法近似）
+function destPoint(originLat, originLng, azDeg, distKm) {
+  const R   = 6371;
+  const d   = distKm / R; // ラジアン
+  const az  = azDeg * Math.PI / 180;
+  const φ1  = originLat * Math.PI / 180;
+  const λ1  = originLng * Math.PI / 180;
+  const φ2  = Math.asin(Math.sin(φ1)*Math.cos(d) + Math.cos(φ1)*Math.sin(d)*Math.cos(az));
+  const λ2  = λ1 + Math.atan2(Math.sin(az)*Math.sin(d)*Math.cos(φ1), Math.cos(d) - Math.sin(φ1)*Math.sin(φ2));
+  return [φ2 * 180/Math.PI, λ2 * 180/Math.PI];
+}
+
+function clearSunOverlay() {
+  if (sunDotMarker) { map.removeLayer(sunDotMarker); sunDotMarker = null; }
+  if (sunAnimTimer) { clearInterval(sunAnimTimer);   sunAnimTimer = null; }
+  map.off('moveend', _renderSunSVG);
+  _sunOrbitLat = null;
+  _sunOrbitLng = null;
+  const svg = document.getElementById('sun-orbit-svg');
+  svg.style.display = 'none';
+  svg.innerHTML = '';
+}
+
+// ── SVGオーバーレイ方式の太陽軌道描画 ─────────────
+// 地図のズーム・パンに関わらず、現在地を画面中央に固定した
+// SVGを地図上に重ねて描画する。map.on('move') で毎フレーム更新。
+
+let _sunOrbitLat = null;
+let _sunOrbitLng = null;
+
+function _renderSunSVG() {
+  if (_sunOrbitLat === null) return;
+  const lat = _sunOrbitLat, lng = _sunOrbitLng;
+
+  const svg  = document.getElementById('sun-orbit-svg');
+  const wrap = document.getElementById('map-wrap');
+  const W    = wrap.clientWidth;
+  const H    = wrap.clientHeight;
+  // 地平線円の半径: 画面短辺の44%
+  const R    = Math.min(W, H) * 0.44;
+  // 外周リング幅
+  const RING = R * 0.10;
+
+  // 現在地の画面ピクセル座標
+  const originPx = map.latLngToContainerPoint(L.latLng(lat, lng));
+  const cx = originPx.x;
+  const cy = originPx.y;
+
+  // ── 天文計算 ────────────────────────────────
+  const path  = calcDaySunPath(lat, lng, 1); // 1分刻み
+  const times = calcSunTimes(lat, lng);
+  if (!times) return;
+
+  const now     = new Date();
+  const start   = new Date(now.getFullYear(), 0, 0);
+  const doy     = Math.floor((now - start) / 86400000);
+  const phi     = lat * Math.PI / 180;
+  const delta   = sunDeclination(doy);
+  const B       = 2 * Math.PI * (doy - 81) / 364;
+  const eot     = 9.87*Math.sin(2*B) - 7.53*Math.cos(B) - 1.5*Math.sin(B);
+  const noonJST = 12 - lng/15 - eot/60 + 9;
+  const nowH    = now.getHours() + now.getMinutes()/60 + now.getSeconds()/3600;
+
+  // 方位角・高度 → SVGピクセル座標（高度0°=地平線円上, 90°=中心）
+  function azAltToXY(azDeg, altDeg) {
+    const r = R * Math.cos(altDeg * Math.PI / 180);
+    return {
+      x: cx + r * Math.sin(azDeg * Math.PI / 180),
+      y: cy - r * Math.cos(azDeg * Math.PI / 180)
+    };
+  }
+  // 方位角のみ → 指定半径上の座標
+  function azToXY(azDeg, radius) {
+    return {
+      x: cx + radius * Math.sin(azDeg * Math.PI / 180),
+      y: cy - radius * Math.cos(azDeg * Math.PI / 180)
+    };
+  }
+
+  let html = '';
+
+  // ══════════════════════════════════════════════
+  // ① 背景：内側に薄い黄土色の円フィル
+  // ══════════════════════════════════════════════
+  html += `<circle cx="${cx}" cy="${cy}" r="${R}"
+    fill="rgba(210,180,100,0.13)" stroke="none"/>`;
+
+  // ══════════════════════════════════════════════
+  // ② 外周リング（黄土色グラデーション帯）
+  //    太陽が高い方位で明るく、地平線付近で薄い
+  // ══════════════════════════════════════════════
+  // リング全体を黄土色で描画（後でセグメントを上書き）
+  html += `<circle cx="${cx}" cy="${cy}" r="${(R + RING*0.5).toFixed(1)}"
+    fill="none" stroke="rgba(200,160,60,0.35)" stroke-width="${RING.toFixed(1)}"/>`;
+
+  // 昼間の弧を濃い黄土色で上書き
+  // 日の出方位〜日の入り方位を強調
+  {
+    const azR = times.riseH !== undefined ? (() => {
+      const h = (times.riseH - noonJST) * Math.PI / 12;
+      return sunPosition(phi, delta, h).az;
+    })() : 90;
+    const azS = (() => {
+      const h = (times.setH - noonJST) * Math.PI / 12;
+      return sunPosition(phi, delta, h).az;
+    })();
+    // 昼間の弧（日の出から日の入まで時計回り）
+    const rRing = R + RING * 0.5;
+    const p1 = azToXY(azR, rRing);
+    const p2 = azToXY(azS, rRing);
+    // 東側（時計回り）の大弧
+    const largeArc = 1;
+    html += `<path d="M${p1.x.toFixed(1)},${p1.y.toFixed(1)} A${rRing.toFixed(1)},${rRing.toFixed(1)} 0 ${largeArc},1 ${p2.x.toFixed(1)},${p2.y.toFixed(1)}"
+      fill="none" stroke="rgba(200,160,40,0.6)" stroke-width="${RING.toFixed(1)}" stroke-linecap="butt"/>`;
+  }
+
+  // ══════════════════════════════════════════════
+  // ③ 外周リングの目盛り＋方位角ラベル（10°刻み）
+  // ══════════════════════════════════════════════
+  const tickR     = R + RING * 0.05;  // 目盛り内端
+  const tickRlong = R + RING * 0.75;  // 長目盛り（10°）外端
+  const tickRshort= R + RING * 0.4;   // 短目盛り（5°）外端
+  const labelR    = R + RING * 1.1;   // 数字ラベル半径
+
+  for (let az = 0; az < 360; az += 5) {
+    const isLong = az % 10 === 0;
+    const p1 = azToXY(az, tickR);
+    const p2 = azToXY(az, isLong ? tickRlong : tickRshort);
+    html += `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}"
+      x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}"
+      stroke="rgba(180,150,60,0.9)" stroke-width="${isLong ? 1.2 : 0.7}"/>`;
+
+    if (isLong && az % 10 === 0) {
+      const lp = azToXY(az, labelR);
+      // ラベルをリングに沿って回転
+      const rot = az;
+      html += `<text x="${lp.x.toFixed(1)}" y="${lp.y.toFixed(1)}"
+        text-anchor="middle" dominant-baseline="middle"
+        font-family="'IBM Plex Sans',sans-serif" font-size="9" font-weight="400"
+        fill="rgba(180,150,50,1)"
+        transform="rotate(${rot},${lp.x.toFixed(1)},${lp.y.toFixed(1)})">${az}</text>`;
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  // ④ 地平線サークル（内側の実線）
+  // ══════════════════════════════════════════════
+  html += `<circle cx="${cx}" cy="${cy}" r="${R}"
+    fill="none" stroke="rgba(100,100,100,0.6)" stroke-width="1.5"/>`;
+
+  // ══════════════════════════════════════════════
+  // ⑤ 方位線（N/E/S/W → 中心まで）
+  // ══════════════════════════════════════════════
+  [0, 90, 180, 270].forEach(az => {
+    const p = azToXY(az, R);
+    html += `<line x1="${cx}" y1="${cy}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}"
+      stroke="rgba(80,80,80,0.3)" stroke-width="0.8"/>`;
+  });
+
+  // ══════════════════════════════════════════════
+  // ⑥ N / E / S / W ラベル（赤・リング内側）
+  // ══════════════════════════════════════════════
+  const cardR = R + RING * 0.5;
+  [['N',0],['E',90],['S',180],['W',270]].forEach(([lbl, az]) => {
+    const p = azToXY(az, cardR);
+    html += `<text x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}"
+      text-anchor="middle" dominant-baseline="middle"
+      font-family="'IBM Plex Sans',sans-serif" font-size="14" font-weight="700"
+      fill="#e63c3c">${lbl}</text>`;
+  });
+
+  // ══════════════════════════════════════════════
+  // ⑦ 太陽軌道ライン（昼=緑, 夜=青）
+  // ══════════════════════════════════════════════
+  const segments = [];
+  let curSeg = null;
+  path.forEach(({ az, alt }) => {
+    const above = alt >= 0;
+    if (!curSeg || curSeg.above !== above) {
+      curSeg = { above, pts: [] };
+      segments.push(curSeg);
+    }
+    const p = azAltToXY(az, alt);
+    curSeg.pts.push(`${p.x.toFixed(1)},${p.y.toFixed(1)}`);
+  });
+
+  segments.forEach(seg => {
+    if (seg.pts.length < 2) return;
+    const d = 'M' + seg.pts.join(' L');
+    if (seg.above) {
+      html += `<path d="${d}" fill="none" stroke="#22a855" stroke-width="2.5" stroke-linecap="round" opacity="0.95"/>`;
+    } else {
+      html += `<path d="${d}" fill="none" stroke="#4488ff" stroke-width="2" stroke-linecap="round" opacity="0.6"/>`;
+    }
+  });
+
+  // ══════════════════════════════════════════════
+  // ⑧ 毎時ドット（オレンジ）＋時刻ラベル
+  // ══════════════════════════════════════════════
+  for (let h = 0; h < 24; h++) {
+    const hAngle = (h - noonJST) * Math.PI / 12;
+    const pos    = sunPosition(phi, delta, hAngle);
+    const p      = azAltToXY(pos.az, pos.alt);
+    const isNow  = Math.abs(h - Math.floor(nowH)) < 0.5 && pos.alt > -5;
+    // ラベル位置（ドットから少し外側へ）
+    const labelOffset = 14;
+    const lx = p.x + labelOffset * Math.sin(pos.az * Math.PI / 180) * (pos.alt < 0 ? 0.7 : 1);
+    const ly = p.y - labelOffset * Math.cos(pos.az * Math.PI / 180) * (pos.alt < 0 ? 0.7 : 1);
+
+    html += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${pos.alt >= 0 ? 4.5 : 3}"
+      fill="${pos.alt >= 0 ? '#f07800' : '#5588cc'}" opacity="${pos.alt >= 0 ? 0.95 : 0.55}"/>`;
+    html += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}"
+      text-anchor="middle" dominant-baseline="middle"
+      font-family="'IBM Plex Sans',sans-serif" font-size="${pos.alt >= 0 ? 11 : 9}"
+      font-weight="600" fill="${pos.alt >= 0 ? '#f07800' : '#6699cc'}"
+      opacity="${pos.alt >= 0 ? 1 : 0.6}">${String(h).padStart(2,'0')}</text>`;
+  }
+
+  // ══════════════════════════════════════════════
+  // ⑨ 日の出・日の入り時刻ラベル（リング上）
+  // ══════════════════════════════════════════════
+  [
+    { jstH: times.riseH, label: fmtTime(times.rise), color: '#f07800' },
+    { jstH: times.setH,  label: fmtTime(times.set),  color: '#f07800' }
+  ].forEach(({ jstH, label, color }) => {
+    const h   = (jstH - noonJST) * Math.PI / 12;
+    const pos = sunPosition(phi, delta, h);
+    const lp  = azToXY(pos.az, R + RING * 1.55);
+    html += `<text x="${lp.x.toFixed(1)}" y="${lp.y.toFixed(1)}"
+      text-anchor="middle" dominant-baseline="middle"
+      font-family="'IBM Plex Sans',sans-serif" font-size="12" font-weight="700"
+      fill="${color}">${label}</text>`;
+  });
+
+  // ══════════════════════════════════════════════
+  // ⑩ 現在の太陽位置（赤い放射マーク＋現在時刻＋赤い水平線）
+  // ══════════════════════════════════════════════
+  const hNow   = (nowH - noonJST) * Math.PI / 12;
+  const posNow = sunPosition(phi, delta, hNow);
+  const sunPx  = azAltToXY(posNow.az, posNow.alt);
+  const isDay  = posNow.alt >= 0;
+
+  // 赤い水平線（地平線レベルの方位方向の直線）
+  if (isDay) {
+    const horizPx = azAltToXY(posNow.az, 0); // 地平線上の方位点
+    html += `<line x1="${cx}" y1="${cy}" x2="${horizPx.x.toFixed(1)}" y2="${horizPx.y.toFixed(1)}"
+      stroke="#e63c3c" stroke-width="1.2" opacity="0.7" stroke-dasharray="4 3"/>`;
+  }
+
+  // 放射状の光線（太陽アイコン）
+  const sunR1 = 8, sunR2 = 14, sunCore = 6;
+  for (let i = 0; i < 8; i++) {
+    const ang = (i * 45) * Math.PI / 180;
+    const x1  = sunPx.x + sunR1 * Math.cos(ang);
+    const y1  = sunPx.y + sunR1 * Math.sin(ang);
+    const x2  = sunPx.x + sunR2 * Math.cos(ang);
+    const y2  = sunPx.y + sunR2 * Math.sin(ang);
+    html += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}"
+      x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
+      stroke="#e63c3c" stroke-width="1.5" stroke-linecap="round"
+      opacity="${isDay ? 0.9 : 0.3}"/>`;
+  }
+  // 中心円
+  html += `<circle cx="${sunPx.x.toFixed(1)}" cy="${sunPx.y.toFixed(1)}" r="${sunCore}"
+    fill="#e63c3c" opacity="${isDay ? 0.95 : 0.4}"/>`;
+
+  // 現在時刻ラベル（太陽の左上）
+  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const tlx = sunPx.x - 20;
+  const tly = sunPx.y - 20;
+  html += `<text x="${tlx.toFixed(1)}" y="${tly.toFixed(1)}"
+    text-anchor="middle" font-family="'IBM Plex Sans',sans-serif"
+    font-size="13" font-weight="700" fill="#e63c3c"
+    style="text-shadow:0 1px 4px rgba(0,0,0,0.8)">${timeStr}</text>`;
+
+  svg.innerHTML = html;
+  svg.style.display = 'block';
+}
+
+function drawSunOrbit(lat, lng) {
+  _sunOrbitLat = lat;
+  _sunOrbitLng = lng;
+
+  // 既存の Leafletマーカーをクリア
+  if (sunDotMarker) { map.removeLayer(sunDotMarker); sunDotMarker = null; }
+  if (sunAnimTimer) { clearInterval(sunAnimTimer);   sunAnimTimer = null; }
+
+  _renderSunSVG();
+
+  // ズーム・パンのたびに再描画
+  map.off('moveend', _renderSunSVG);
+  map.on('moveend', _renderSunSVG);
+
+  // 1分ごとに太陽位置を更新
+  sunAnimTimer = setInterval(_renderSunSVG, 60000);
+}
+
+// ── 既存 updateSunPanel（小パネル側）を地図連動で更新 ──
+function updateSunPanel(lat, lng) {
+  const times = calcSunTimes(lat, lng);
+  if (!times) return;
+
+  document.getElementById('sun-rise').textContent = fmtTime(times.rise);
+  document.getElementById('sun-noon').textContent = fmtTime(times.noon);
+  document.getElementById('sun-set').textContent  = fmtTime(times.set);
+
+  const now  = new Date();
+  const nowH = now.getHours() + now.getMinutes() / 60;
+  const t    = Math.max(0, Math.min(1, (nowH - times.riseH) / (times.setH - times.riseH)));
+
+  const endPt = arcPoint(t);
+  let progressPath = '';
+  if (t > 0) {
+    const startPt  = arcPoint(0);
+    const largeArc = t > 0.5 ? 1 : 0;
+    progressPath = `M${startPt.x.toFixed(2)},${startPt.y.toFixed(2)} A68,54 0 ${largeArc},1 ${endPt.x.toFixed(2)},${endPt.y.toFixed(2)}`;
+  }
+  document.getElementById('sun-arc-progress').setAttribute('d', progressPath);
+
+  const dot = document.getElementById('sun-pos-dot');
+  if (nowH >= times.riseH && nowH <= times.setH) {
+    dot.setAttribute('cx', endPt.x.toFixed(2));
+    dot.setAttribute('cy', endPt.y.toFixed(2));
+    dot.setAttribute('opacity', '1');
+  } else {
+    dot.setAttribute('opacity', '0');
+  }
+}
+
+// SVG半円アーク上の座標（cx=76, cy=54, rx=68, ry=54）
+function arcPoint(t) {
+  const angle = Math.PI * (1 - t);
+  return { x: 76 + 68 * Math.cos(angle), y: 54 - 54 * Math.sin(angle) };
+}
+
+// UV 強度の色・ラベル
+function uvColor(uv) {
+  if (uv <= 2)  return '#198038';
+  if (uv <= 5)  return '#f1c21b';
+  if (uv <= 7)  return '#ff832b';
+  if (uv <= 10) return '#da1e28';
+  return '#8a3ffc';
+}
+function uvLabel(uv) {
+  if (uv <= 2)  return 'Low';
+  if (uv <= 5)  return 'Moderate';
+  if (uv <= 7)  return 'High';
+  if (uv <= 10) return 'Very High';
+  return 'Extreme';
+}
+
+async function fetchWeatherAndSun(lat, lng) {
+  updateSunPanel(lat, lng);
+  if (sunOrbitMode) drawSunOrbit(lat, lng);
+
+  // 天気タブのSVG弧も更新
+  updateWeatherTabSun(lat, lng);
+
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,uv_index&timezone=Asia%2FTokyo`;
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+    const temp = data.current.temperature_2m;
+    const uv   = data.current.uv_index;
+
+    // マップ上パネル更新
+    document.getElementById('wp-temp').textContent = temp !== null ? temp.toFixed(1) : '--';
+    document.getElementById('wp-uv').textContent   = uv   !== null ? uv.toFixed(1)   : '--';
+    if (uv !== null) {
+      const pct = Math.min(100, (uv / 11) * 100);
+      const bar = document.getElementById('uv-bar');
+      bar.style.width = pct + '%';
+      bar.style.background = uvColor(uv);
+    }
+    const wpHint = document.getElementById('wp-hint');
+    if (wpHint) wpHint.textContent = uv !== null ? `UV: ${uvLabel(uv)}` : '取得完了';
+
+    // 天気タブ更新
+    const tTemp = document.getElementById('wt-temp');
+    const tUv   = document.getElementById('wt-uv');
+    const tTsub = document.getElementById('wt-temp-sub');
+    const tUsub = document.getElementById('wt-uv-sub');
+    const tUbar = document.getElementById('wt-uv-bar');
+    if (tTemp) { tTemp.innerHTML = temp !== null ? `${temp.toFixed(1)}<span>°C</span>` : '--<span>°C</span>'; }
+    if (tTsub) { tTsub.textContent = temp !== null ? `体感温度: ${(temp - 3).toFixed(1)}°C` : '気温データなし'; }
+    if (tUv)   { tUv.innerHTML   = uv !== null ? `${uv.toFixed(1)}` : '--'; }
+    if (tUsub) { tUsub.textContent = uv !== null ? `UV強度: ${uvLabel(uv)}` : 'UV指数データなし'; }
+    if (tUbar && uv !== null) {
+      const pct = Math.min(100, (uv / 11) * 100);
+      tUbar.style.width = pct + '%';
+      tUbar.style.background = uvColor(uv);
+    }
+    // 位置情報ラベル
+    const locLabel = document.getElementById('weather-location-label');
+    // 住所表示（非同期で更新）
+    if (locLabel) {
+      locLabel.textContent = '場所を取得中...';
+      reverseGeocode(lat, lng).then(addr => {
+        if (locLabel) locLabel.textContent = `${addr} のデータ`;
+      });
+    }
+  } catch (e) {
+    document.getElementById('wp-temp').textContent = 'ERR';
+    document.getElementById('wp-uv').textContent   = 'ERR';
+  }
+}
+
+// 天気タブの太陽軌道SVG更新
+function updateWeatherTabSun(lat, lng) {
+  const times = calcSunTimes(lat, lng);
+  if (!times) return;
+  const now  = new Date();
+  const nowH = now.getHours() + now.getMinutes()/60;
+  const t    = Math.max(0, Math.min(1, (nowH - times.riseH) / (times.setH - times.riseH)));
+
+  // viewBox: 0 0 400 120  中心:(200,100) 半径x=180,y=100
+  function arcPt(tt) {
+    const angle = Math.PI * (1 - tt);
+    return { x: 20 + 360*((1-Math.cos(Math.PI*(1-tt)))/2), y: 100 - 100*Math.sin(Math.PI*(1-tt)) };
+  }
+  // 正確な半楕円計算
+  function arcPt2(tt) {
+    const a = Math.PI * (1 - tt);
+    return { x: (20 + 180*(1+Math.cos(a))).toFixed(1), y: (100 - 100*Math.sin(a)).toFixed(1) };
+  }
+
+  const endPt = arcPt2(t);
+  let prog = '';
+  if (t > 0) {
+    const startPt = arcPt2(0);
+    const la = t > 0.5 ? 1 : 0;
+    prog = `M${startPt.x},${startPt.y} A180,100 0 ${la},1 ${endPt.x},${endPt.y}`;
+  }
+  const progEl = document.getElementById('saw-progress');
+  const dotEl  = document.getElementById('saw-dot');
+  if (progEl) progEl.setAttribute('d', prog);
+  if (dotEl) {
+    if (nowH >= times.riseH && nowH <= times.setH) {
+      dotEl.setAttribute('cx', endPt.x); dotEl.setAttribute('cy', endPt.y); dotEl.setAttribute('opacity','1');
+    } else { dotEl.setAttribute('opacity','0'); }
+  }
+  const rEl = document.getElementById('saw-rise');
+  const nEl = document.getElementById('saw-noon');
+  const sEl = document.getElementById('saw-set');
+  if (rEl) rEl.textContent = `日の出 ${fmtTime(times.rise)}`;
+  if (nEl) nEl.textContent = `南中 ${fmtTime(times.noon)}`;
+  if (sEl) sEl.textContent = `日の入 ${fmtTime(times.set)}`;
+}
+
+// 天気タブの「現在地を取得」ボタン
+document.getElementById('weather-locate-btn').addEventListener('click', function() {
+  document.getElementById('locate-btn').click();
+  // 天気タブに留まる（タブ切り替えしない）
+});
+
+document.getElementById('locate-btn').addEventListener('click', function() {
+  if (!navigator.geolocation) {
+    alert('このブラウザは位置情報に対応していません。');
+    return;
+  }
+  const btn = this;
+  btn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      btn.classList.remove('locating');
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      // 現在地マーカー
+      if (locateMarker) map.removeLayer(locateMarker);
+      const locIcon = L.divIcon({
+        html: `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+          <circle cx="11" cy="11" r="9" fill="#0f62fe" fill-opacity="0.18" stroke="#0f62fe" stroke-width="1.5"/>
+          <circle cx="11" cy="11" r="4" fill="#0f62fe"/>
+        </svg>`,
+        className: '', iconSize: [22,22], iconAnchor: [11,11]
+      });
+      locateMarker = L.marker([lat, lng], { icon: locIcon, zIndexOffset: 500 }).addTo(map);
+      // まずポップアップを仮設定してから住所取得後に更新
+      const popupNode = L.popup({ maxWidth: 280 }).setContent(
+        `<div style="font-family:'Noto Sans JP','Noto Sans',sans-serif;padding:8px 14px;font-size:13px;background:#1a2f3a;color:#fff;">
+          <b style="color:#fff;">現在地</b><br>
+          <span style="color:rgba(255,255,255,0.45);font-size:11px;font-family:'Inter',sans-serif;">取得中...</span>
+        </div>`
+      );
+      locateMarker.bindPopup(popupNode);
+      reverseGeocode(lat, lng).then(addr => {
+        popupNode.setContent(
+          `<div style="font-family:'Noto Sans JP','Noto Sans',sans-serif;padding:8px 14px;font-size:13px;background:#1a2f3a;color:#fff;">
+            <b style="color:#fff;">現在地</b><br>
+            <span style="color:rgba(255,255,255,0.7);font-size:12px;">${addr}</span>
+          </div>`
+        );
+      });
+      map.setView([lat, lng], 12);
+      fetchWeatherAndSun(lat, lng);
+    },
+    function() {
+      btn.classList.remove('locating');
+      alert('位置情報を取得できませんでした。ブラウザの設定を確認してください。');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
 });
 </script>
 </body>
