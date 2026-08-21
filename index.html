@@ -380,7 +380,7 @@
     .leaflet-popup-content-wrapper {
       border-radius: var(--radius-md) !important;
       padding: 0 !important; overflow: hidden;
-      background: #1a2f3a !important;
+      background: #182633 !important;
       border: 1px solid rgba(255,255,255,0.09) !important;
       box-shadow: 0 12px 36px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.3) !important;
       min-width: 280px !important;
@@ -394,7 +394,7 @@
       transition: color var(--t-base);
     }
     .leaflet-popup-close-button:hover { color: var(--kcc-white) !important; }
-    .leaflet-popup-tip { background: #1a2f3a !important; }
+    .leaflet-popup-tip { background: #182633 !important; }
 
     /* ══ MODAL ══ */
     #modal-overlay {
@@ -563,7 +563,8 @@
       background: var(--kcc-surface); cursor: pointer;
       transition: background var(--t-base) var(--ease-out-quart),
                   transform var(--t-base) var(--ease-out-quart),
-                  box-shadow var(--t-base) var(--ease-out-quart);
+                  box-shadow var(--t-base) var(--ease-out-quart),
+                  border-color var(--t-base) var(--ease-out-quart);
       overflow: hidden;
       border-radius: var(--radius-md);
       border: 1px solid rgba(255,255,255,0.06);
@@ -571,47 +572,54 @@
     .spot-card:hover {
       background: var(--kcc-surface2);
       transform: translateY(-3px);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.25);
-      border-color: rgba(255,255,255,0.1);
+      box-shadow: 0 14px 36px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.25);
+      border-color: rgba(255,255,255,0.11);
       z-index: 1; position: relative;
     }
     .spot-card:active { transform: translateY(0) scale(0.99); transition-duration: var(--t-fast); }
-    .spot-card-img { width: 100%; height: 140px; object-fit: cover; display: block; }
+    .spot-card-unconfirmed { opacity: 0.65; border-color: rgba(255,255,255,0.04); }
+    .spot-card-unconfirmed .spot-card-placeholder { background: linear-gradient(135deg, #1a1a1a, #252525); }
+    .spot-card-img { width: 100%; height: 148px; object-fit: cover; display: block; }
     .spot-card-placeholder {
-      width: 100%; height: 140px;
+      width: 100%; height: 148px;
       background: linear-gradient(135deg, #162330, #1e3a4a);
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px; opacity: 0.35;
+      font-size: 28px; opacity: 0.25;
     }
-    .spot-card-body { padding: 13px 15px 12px; }
-    .spot-card-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
+    .spot-card-body { padding: 13px 14px 10px; }
+    .spot-card-meta {
+      display: flex; align-items: center; gap: 5px;
+      flex-wrap: wrap; margin-bottom: 7px;
+    }
     .stag {
       font-size: 10px; font-weight: 500;
       padding: 2px 8px; border-radius: 4px; letter-spacing: 0.04em;
     }
-    .stag.outdoor { background: rgba(255,107,59,0.12); color: var(--kcc-coral); border: 1px solid rgba(255,107,59,0.2); }
-    .stag.salon   { background: rgba(138,107,255,0.12); color: #a08fff; border: 1px solid rgba(138,107,255,0.2); }
-    .stag.user    { background: rgba(74,168,216,0.12); color: #4aa8d8; border: 1px solid rgba(74,168,216,0.2); }
-    .spref { font-size: 10px; color: rgba(255,255,255,0.26); letter-spacing: 0.04em; }
+    .stag.outdoor { background: rgba(255,107,59,0.12); color: var(--kcc-coral); border: 1px solid rgba(255,107,59,0.22); }
+    .stag.user    { background: rgba(74,168,216,0.12); color: #4aa8d8; border: 1px solid rgba(74,168,216,0.22); }
+    .spref {
+      font-size: 10px; color: rgba(255,255,255,0.24);
+      letter-spacing: 0.03em;
+    }
     .spot-card-name {
       font-size: 13px; font-weight: 500;
       color: var(--kcc-white); line-height: 1.4;
-      letter-spacing: 0.03em; margin-bottom: 5px;
+      letter-spacing: 0.02em; margin-bottom: 5px;
     }
     .spot-card-memo {
-      font-size: 11px; color: rgba(255,255,255,0.36);
-      line-height: 1.65; letter-spacing: 0.02em;
+      font-size: 11px; color: rgba(255,255,255,0.33);
+      line-height: 1.65; letter-spacing: 0.01em;
       display: -webkit-box; -webkit-box-orient: vertical;
       -webkit-line-clamp: 2; overflow: hidden;
     }
     .spot-card-goto {
       display: flex; align-items: center; justify-content: flex-end; gap: 4px;
-      padding: 8px 14px 12px;
+      padding: 6px 14px 12px;
       font-family: var(--f-en); font-size: 10px; letter-spacing: 0.12em;
-      color: rgba(255,255,255,0.16);
+      color: rgba(255,255,255,0.14);
       transition: color var(--t-base), gap var(--t-base) var(--ease-spring);
     }
-    .spot-card:hover .spot-card-goto { color: var(--kcc-coral); gap: 6px; }
+    .spot-card:hover .spot-card-goto { color: var(--kcc-coral); gap: 7px; }
 
     /* ══ WEATHER TAB ══ */
     #panel-weather { background: #0a151b; }
@@ -621,14 +629,16 @@
     }
     .weather-card {
       background: var(--kcc-surface);
-      padding: 22px;
+      padding: 20px 22px 22px;
       border-radius: var(--radius-md);
       border: 1px solid rgba(255,255,255,0.06);
+      transition: border-color var(--t-base);
     }
+    .weather-card:hover { border-color: rgba(255,255,255,0.1); }
     .wc-label {
       font-family: var(--f-en); font-size: 9px; font-weight: 600;
       letter-spacing: 0.32em; text-transform: uppercase;
-      color: rgba(255,255,255,0.25); margin-bottom: 12px;
+      color: rgba(255,255,255,0.22); margin-bottom: 12px;
     }
     .wc-value {
       font-family: var(--f-en); font-size: 38px; font-weight: 200;
@@ -736,6 +746,148 @@
       border-top: 1px solid rgba(255,255,255,0.04);
     }
 
+    /* ══ VERIFIED BADGE (spots list) ══ */
+    .vbadge {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 10px; font-weight: 500;
+      padding: 2px 7px; border-radius: 4px;
+      letter-spacing: 0.02em; flex-shrink: 0;
+    }
+    .vbadge-confirmed {
+      color: #42be65;
+      background: rgba(66,190,101,0.1);
+      border: 1px solid rgba(66,190,101,0.28);
+    }
+    .vbadge-unconfirmed {
+      color: rgba(255,255,255,0.36);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    /* ══ SPOTS COUNT BAR ══ */
+    .spots-toolbar {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 7px 16px 5px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .spots-count-text {
+      font-family: var(--f-en); font-size: 11px;
+      color: rgba(255,255,255,0.32); letter-spacing: 0.08em;
+    }
+    .spots-count-text strong {
+      color: rgba(255,255,255,0.7); font-weight: 600;
+    }
+    /* トグルスイッチ */
+    .toggle-wrap {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; user-select: none;
+      font-family: var(--f-jp); font-size: 11px;
+      color: rgba(255,255,255,0.4);
+    }
+    .toggle-track {
+      position: relative; display: inline-block;
+      width: 36px; height: 20px;
+    }
+    .toggle-track input {
+      opacity: 0; width: 0; height: 0; position: absolute;
+    }
+    .toggle-rail {
+      position: absolute; inset: 0;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: background var(--t-base), border-color var(--t-base);
+    }
+    .toggle-thumb {
+      position: absolute; left: 2px; top: 2px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: rgba(255,255,255,0.65);
+      transition: left var(--t-base) var(--ease-spring),
+                  background var(--t-base);
+    }
+    .toggle-track input:checked ~ .toggle-rail {
+      background: rgba(218,30,40,0.6);
+      border-color: rgba(218,30,40,0.4);
+    }
+    .toggle-track input:checked ~ .toggle-thumb {
+      left: 18px; background: #fff;
+    }
+
+    /* ══ POPUP DARK ══ */
+    .popup-dark {
+      font-family: var(--f-jp);
+      width: 280px;
+      background: #182633;
+      overflow: hidden;
+    }
+    .popup-photo { width: 100%; height: 140px; overflow: hidden; background: #111e26; }
+    .popup-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .popup-topbar { height: 3px; width: 100%; }
+    .popup-head {
+      padding: 13px 16px 11px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .popup-name {
+      font-size: 15px; font-weight: 600;
+      color: var(--kcc-white); line-height: 1.3;
+      letter-spacing: 0.02em; margin-bottom: 7px;
+    }
+    .popup-badges { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+    .popup-badge {
+      font-size: 10px; font-weight: 500;
+      padding: 2px 8px; border-radius: 3px;
+      letter-spacing: 0.02em;
+    }
+    .popup-badge-outdoor { background: rgba(218,30,40,0.15); color: #fa4d56; border: 1px solid rgba(218,30,40,0.3); }
+    .popup-badge-user    { background: rgba(15,98,254,0.15); color: #78a9ff; border: 1px solid rgba(15,98,254,0.3); }
+    .popup-badge-pref    { font-size: 10px; font-weight: 400; padding: 2px 8px; border-radius: 3px; letter-spacing: 0.02em; }
+    .popup-badge-confirmed   { background: rgba(66,190,101,0.12); color: #42be65; border: 1px solid rgba(66,190,101,0.28); }
+    .popup-badge-unconfirmed { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.38); border: 1px solid rgba(255,255,255,0.12); }
+    .popup-body { padding: 12px 16px 4px; }
+    .popup-area {
+      font-size: 11px; color: rgba(255,255,255,0.35);
+      letter-spacing: 0.03em; margin-bottom: 6px;
+    }
+    .popup-memo {
+      font-size: 13px; color: rgba(255,255,255,0.62);
+      line-height: 1.65; margin-bottom: 8px; letter-spacing: 0.01em;
+    }
+    .popup-tips {
+      font-size: 12px; color: #78a9ff;
+      background: rgba(15,98,254,0.08);
+      padding: 8px 12px;
+      border-left: 2px solid rgba(15,98,254,0.5);
+      line-height: 1.55; letter-spacing: 0.01em;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-bottom: 8px;
+    }
+    .popup-verified-meta {
+      font-size: 10px; color: rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      line-height: 1.75; margin-bottom: 8px;
+    }
+    .popup-verified-meta .pvm-muted { color: rgba(255,255,255,0.2); }
+    .popup-unconfirmed-note {
+      font-size: 10px; color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px; line-height: 1.6; margin-bottom: 8px;
+    }
+    .popup-health {
+      font-size: 11px; color: rgba(255,255,255,0.28);
+      background: rgba(255,255,255,0.03);
+      border-left: 2px solid rgba(255,255,255,0.1);
+      padding: 7px 10px;
+      line-height: 1.55; letter-spacing: 0.01em;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-bottom: 12px;
+    }
+
     /* ══ MOBILE ══ */
     @media (max-width: 640px) {
       #site-header { height: 52px; padding: 0 14px; }
@@ -755,6 +907,8 @@
       .section-hdr h2 { font-size: 17px; }
       .spots-filter { padding: 6px 8px; gap: 5px; }
       .spots-grid { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+      .spot-card-img { height: 130px; }
+      .spot-card-placeholder { height: 130px; }
       .weather-grid { grid-template-columns: 1fr; padding: 12px 12px 0; gap: 10px; }
       .weather-card { padding: 16px; }
       .wc-value { font-size: 32px; }
@@ -872,8 +1026,7 @@
       <div id="legend">
         <div class="legend-title">Legend</div>
         <div class="legend-item"><div class="dot dot-outdoor"></div>屋外スポット</div>
-        <div class="legend-item"><div class="dot dot-salon"></div>日サロ</div>
-        <div class="legend-item"><div class="dot dot-user"></div>投稿スポット</div>
+        <div class="legend-item"><div class="dot dot-user"></div>マイスポット</div>
       </div>
       <div id="spot-count"></div>
     </div>
@@ -887,12 +1040,22 @@
     </div>
     <div class="spots-filter">
       <button class="sfbtn active" data-sfilter="all">すべて</button>
-      <button class="sfbtn" data-sfilter="outdoor">☀ 屋外</button>
-      <button class="sfbtn" data-sfilter="salon">✦ 日サロ</button>
       <button class="sfbtn" data-sfilter="tokyo">東京</button>
       <button class="sfbtn" data-sfilter="kanagawa">神奈川</button>
       <button class="sfbtn" data-sfilter="saitama">埼玉</button>
       <button class="sfbtn" data-sfilter="chiba">千葉</button>
+    </div>
+    <!-- 件数 & 未確認スイッチ -->
+    <div class="spots-toolbar">
+      <span class="spots-count-text" id="spots-count-label"></span>
+      <label class="toggle-wrap">
+        <span>未確認候補も表示</span>
+        <span class="toggle-track">
+          <input type="checkbox" id="show-unconfirmed-toggle">
+          <span class="toggle-rail"></span>
+          <span class="toggle-thumb"></span>
+        </span>
+      </label>
     </div>
     <div class="spots-grid" id="spots-grid"></div>
   </div>
@@ -917,7 +1080,7 @@
       </div>
     </div>
     <div class="weather-arc-section">
-      <div class="was-label" style="margin-bottom:12px;">Sun Path 3D</div>
+      <div class="was-label" style="margin-bottom:12px;">太陽軌道 / Sun Path</div>
 
       <!-- 3Dマップ + 太陽軌道コンテナ -->
       <div id="sun3d-wrap" style="position:relative;width:100%;height:340px;border-radius:var(--radius-md);overflow:hidden;background:#0a151b;border:1px solid rgba(255,255,255,0.07);">
@@ -972,7 +1135,7 @@
     <div class="about-hero">
       <div class="eyebrow">About Yakilog</div>
       <h1>日焼けを、もっと<br>スマートに。</h1>
-      <p>焼きログは、関東エリアの日焼けスポットをマッピングしたアプリです。屋外スポットから日サロまで、あなたの「日光浴」をサポートします。</p>
+      <p>焼きログは、関東エリアの屋外日光浴スポットをマッピングしたアプリです。あなたの「日光浴」をサポートします。</p>
     </div>
     <div class="about-section">
       <div class="asec-title">Features</div>
@@ -981,7 +1144,7 @@
         <div class="feature-item"><div class="fi-icon">🗺</div><div class="fi-title">スポットマップ</div><div class="fi-desc">関東全域の日焼けスポットを地図上で確認できます。</div></div>
         <div class="feature-item"><div class="fi-icon">☀</div><div class="fi-title">太陽軌道</div><div class="fi-desc">任意の地点の太陽軌道をリアルタイムで可視化します。</div></div>
         <div class="feature-item"><div class="fi-icon">🌡</div><div class="fi-title">気温・UV指数</div><div class="fi-desc">現在地の気温とUV指数をリアルタイムで取得します。</div></div>
-        <div class="feature-item"><div class="fi-icon">📍</div><div class="fi-title">スポット投稿</div><div class="fi-desc">お気に入りのスポットを地図に追加できます。</div></div>
+        <div class="feature-item"><div class="fi-icon">📍</div><div class="fi-title">マイスポット保存</div><div class="fi-desc">お気に入りのスポットを端末に保存できます（他ユーザーとは共有されません）。</div></div>
       </div>
     </div>
     <div class="about-section">
@@ -1004,7 +1167,7 @@
       </div>
     </div>
     <div style="text-align:center;padding:28px 24px;font-family:var(--f-en);font-size:10px;color:rgba(255,255,255,0.14);letter-spacing:0.16em;text-transform:uppercase;">
-      Yakilog &nbsp;·&nbsp; 2025
+      Yakilog &nbsp;·&nbsp; 2026
     </div>
   </div>
 
@@ -1030,7 +1193,6 @@
         <label>カテゴリー</label>
         <select id="f-type">
           <option value="outdoor">☀ 屋外スポット</option>
-          <option value="salon">✦ 日サロ</option>
         </select>
       </div>
       <input type="hidden" id="f-lat" />
@@ -1057,7 +1219,7 @@
   </div>
 </div>
 
-<footer id="site-footer">Yakilog &nbsp;·&nbsp; 2025</footer>
+<footer id="site-footer">Yakilog &nbsp;·&nbsp; 2026</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -1076,7 +1238,7 @@ const PRESET_SPOTS = [
     memo:"都内最大級の芝生エリア。開放的で日光浴する人も多い。週末は賑わうが広いので場所は確保しやすい。",
     tips:"UVケアと水分補給を忘れずに。公園ルールを守って利用してください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/7/7b/Shinjuku_Gyoen_National_Garden_and_NTT_DoCoMo_Yoyogi_Building%2C_Tokyo%2C_Japan.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"t2", name:"お台場海浜公園 砂浜", type:"outdoor", pref:"tokyo",
@@ -1084,7 +1246,7 @@ const PRESET_SPOTS = [
     memo:"東京湾を望む砂浜。夏はビーチ気分で日光浴が楽しめる都内屈指のスポット。",
     tips:"潮風あり。塩分対策も忘れずに。夕方は観覧車バックに映える。現地の利用ルールを確認してください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/3/38/Odaiba_beach_at_dusk.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"t3", name:"駒沢オリンピック公園 芝生広場", type:"outdoor", pref:"tokyo",
@@ -1092,7 +1254,7 @@ const PRESET_SPOTS = [
     memo:"広大な芝生。ランナー・スポーツ勢が多く開放的な雰囲気。日光浴している人も見かける。",
     tips:"木陰も多い。駐車場あり。現地の利用ルールを守って利用してください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/3/3c/Komazawa_olympic_park.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"t4", name:"昭和記念公園（立川）", type:"outdoor", pref:"tokyo",
@@ -1100,7 +1262,7 @@ const PRESET_SPOTS = [
     memo:"国営公園の広大な芝生エリア。日光浴に適したスペースが豊富。",
     tips:"入場料あり（450円）。公園の利用ルールを事前に確認してください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/a/ac/Showa_Kinen_Park_%40_Tachikawa_%2810605769005%29.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"t5", name:"葛西臨海公園 海辺エリア", type:"outdoor", pref:"tokyo",
@@ -1108,7 +1270,7 @@ const PRESET_SPOTS = [
     memo:"東京東部の海浜公園。砂浜と芝生が広がり開放感がある。BBQエリアもあり一日過ごせる。",
     tips:"都心からアクセス良好。夏場は混む。公園の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/f/f2/Kasai-Rinkai-Park_View_Plaza_Rest_House.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"t6", name:"多摩川河川敷（二子玉川）", type:"outdoor", pref:"tokyo",
@@ -1116,7 +1278,7 @@ const PRESET_SPOTS = [
     memo:"二子玉川駅近くの河川敷。芝生・砂地が広がり開放感がある。",
     tips:"週末はBBQ利用者も多く賑やか。河川敷の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/c/c5/Futako_tamagawa_river_2007_%281112853910%29.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"t7", name:"江戸川河川敷（篠崎・小岩）", type:"outdoor", pref:"tokyo",
@@ -1148,7 +1310,7 @@ const PRESET_SPOTS = [
     memo:"世田谷の広大な公園。芝生が美しく日光浴に適した環境。",
     tips:"用賀駅から徒歩15分。美術館も隣接。売店あり。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/8/8b/Kinuta_Park_04.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"t11", name:"東京港野鳥公園 芝生エリア", type:"outdoor", pref:"tokyo",
@@ -1164,7 +1326,7 @@ const PRESET_SPOTS = [
     memo:"練馬区の広大な公園。芝生エリアが広く日光浴に適している。",
     tips:"光が丘駅から徒歩5分。売店・トイレ完備。公園の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/2/24/Nerima_Municipal_Hikarigaoka_Library_2024-04-29.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"t13", name:"木場公園周辺芝生", type:"outdoor", pref:"tokyo",
@@ -1180,7 +1342,7 @@ const PRESET_SPOTS = [
     memo:"吉祥寺の人気公園。池周辺の芝生で日光浴する人が多い。",
     tips:"週末は混む。公園の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/0/08/Inokashira_park_spring.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"t15", name:"城南島海浜公園 砂浜", type:"outdoor", pref:"tokyo",
@@ -1188,7 +1350,7 @@ const PRESET_SPOTS = [
     memo:"羽田空港近くの砂浜。飛行機を眺めながら砂浜で過ごせる。",
     tips:"夏場は海水浴客でにぎわう。BBQ施設あり。公園の利用ルールを確認してください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/3/35/Marine_Park_%40_Jonanjima_%40_Ota_City_%2810354217155%29.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
 
   // ════════════════════════════════
@@ -1200,7 +1362,7 @@ const PRESET_SPOTS = [
     memo:"鎌倉を代表するビーチ。砂浜が広く日光浴に適した環境。",
     tips:"夏季は海の家がオープン。ライフセーバー常駐。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/2/27/Kamakura_Yuigahama_beach_during_winter_with_strong_wind.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"k2", name:"江の島 表浜（片瀬東浜）", type:"outdoor", pref:"kanagawa",
@@ -1208,7 +1370,7 @@ const PRESET_SPOTS = [
     memo:"湘南を代表するビーチ。広大な砂浜でサーファーや日光浴の利用者が多い。",
     tips:"駐車場あり。夏は混雑する。海の家でシャワーも利用可。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/0/0b/Fujisawa_as_seen_from_Enoshima_Island_130809_7.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"k3", name:"逗子海岸", type:"outdoor", pref:"kanagawa",
@@ -1216,7 +1378,7 @@ const PRESET_SPOTS = [
     memo:"逗子の落ち着いたビーチ。比較的混雑が少なく大人な雰囲気。",
     tips:"逗子駅から徒歩15分またはバス。海の家あり。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/3/3e/Zushi_Kaigan_1930s.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"k4", name:"葉山 一色海岸", type:"outdoor", pref:"kanagawa",
@@ -1224,7 +1386,7 @@ const PRESET_SPOTS = [
     memo:"葉山の海岸。透明度が高く落ち着いた雰囲気。",
     tips:"駐車場が少ないので早めに到着を。シュノーケリングも楽しめる。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/8/87/Sunset_and_Mt.Fuji_from_Hayama_%E8%91%89%E5%B1%B1_beach_-_panoramio.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"k5", name:"茅ヶ崎海岸（サザンビーチ）", type:"outdoor", pref:"kanagawa",
@@ -1232,7 +1394,7 @@ const PRESET_SPOTS = [
     memo:"広大な砂浜が続く湘南の海岸。サーファーや日光浴の利用者が多い。",
     tips:"夏はフードブースも充実。茅ヶ崎駅から徒歩15分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/c/c2/Southern_Beach_Chigasaki_Monument.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"k6", name:"平塚海岸", type:"outdoor", pref:"kanagawa",
@@ -1240,7 +1402,7 @@ const PRESET_SPOTS = [
     memo:"比較的すいている穴場ビーチ。広大な砂浜でゆったり過ごせる。",
     tips:"平塚駅からバスで15分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/e/e9/Sun_shining_sea_-_panoramio.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"k7", name:"大磯海水浴場", type:"outdoor", pref:"kanagawa",
@@ -1248,7 +1410,7 @@ const PRESET_SPOTS = [
     memo:"日本最古の海水浴場のひとつ。レトロな雰囲気と広い砂浜が魅力。",
     tips:"大磯駅から徒歩10分。海の家あり。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/e/e1/Oiso_beach_-_alt_-_Kanagawa_-_2023_July_9_various_15_00_36_446000.jpeg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"k8", name:"横浜・本牧海づり施設付近の芝生", type:"outdoor", pref:"kanagawa",
@@ -1264,7 +1426,7 @@ const PRESET_SPOTS = [
     memo:"三浦半島南端のビーチ。砂浜が広く透明度も高い。",
     tips:"京急「三浦海岸」駅から徒歩5分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/d/d2/Miura_Beach_01.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
 
   // ════════════════════════════════
@@ -1276,7 +1438,7 @@ const PRESET_SPOTS = [
     memo:"荒川沿いの広大な公園。芝生が広く日光浴する人が多い。",
     tips:"駐車場無料。売店・BBQエリアあり。公園の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/8/8c/Saiko_%C2%B7_Doman_Green_Park_1.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"sa2", name:"荒川河川敷（熊谷）", type:"outdoor", pref:"saitama",
@@ -1284,7 +1446,7 @@ const PRESET_SPOTS = [
     memo:"熊谷の荒川河川敷。広大な河川敷で遮るものが少ない。",
     tips:"夏は気温が高いため、こまめな水分補給・休憩が必要です。河川敷の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/4/49/251128_Kumagaya_Arakawa_Ryokuchi_15.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"sa3", name:"国営武蔵丘陵森林公園 芝生広場", type:"outdoor", pref:"saitama",
@@ -1292,7 +1454,7 @@ const PRESET_SPOTS = [
     memo:"国営公園の広大な芝生エリア。木陰も多く休憩しやすい環境。",
     tips:"入場料あり（450円）。広大なので自転車レンタルがオススメ。公園の利用ルールを守ってください。",
     photo:"",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"sa4", name:"見沼代親水公園・芝生エリア", type:"outdoor", pref:"saitama",
@@ -1316,7 +1478,7 @@ const PRESET_SPOTS = [
     memo:"秩父・長瀞の荒川沿いの岩畳・河原。夏は水遊び客で賑わう。",
     tips:"ライン下りと合わせて楽しめる。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/e/ea/Arakawa_River_from_Takasago_Bridge_in_Nagatoro%2C_Saitama_3.png",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
 
   // ════════════════════════════════
@@ -1328,7 +1490,7 @@ const PRESET_SPOTS = [
     memo:"東京湾沿いの海浜公園。砂浜が整備されており日光浴しやすい環境。",
     tips:"稲毛海岸駅から徒歩15分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/c/cf/Chiba_beach.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"c2", name:"九十九里浜（片貝海水浴場）", type:"outdoor", pref:"chiba",
@@ -1336,7 +1498,7 @@ const PRESET_SPOTS = [
     memo:"全長約66kmの九十九里浜。広大な砂浜が続き、サーファーも多い人気の海岸。",
     tips:"東京から車で1.5〜2時間。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/c/cb/Kujukuri_be%EF%B8%8F%EF%B8%8F%EF%B8%8Fach_9.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"c3", name:"勝浦海水浴場", type:"outdoor", pref:"chiba",
@@ -1344,7 +1506,7 @@ const PRESET_SPOTS = [
     memo:"外房エリアの人気ビーチ。透明度が高く砂浜も広い。",
     tips:"勝浦駅から徒歩10分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/2/2d/Moriya_Beach%2C_Katsuura_-Aug._2010_a.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"c4", name:"御宿海水浴場", type:"outdoor", pref:"chiba",
@@ -1352,7 +1514,7 @@ const PRESET_SPOTS = [
     memo:"外房の美しいビーチ。白い砂と青い海が広がる。混雑が少なくゆったりと過ごせる。",
     tips:"御宿駅から徒歩15分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/6/6d/Beach_at_Onjuku%2C_Chiba_prefecture_Wikivoyage_banner.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"c6", name:"館山海水浴場（北条海岸）", type:"outdoor", pref:"chiba",
@@ -1360,7 +1522,7 @@ const PRESET_SPOTS = [
     memo:"南房総の館山ビーチ。関東南部のロケーションで水温が高い。",
     tips:"東京から館山道で約2時間。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/b/b7/%E5%8C%97%E6%9D%A1%E6%B5%B7%E5%B2%B8.jpg",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"c7", name:"検見川浜（幕張エリア海岸）", type:"outdoor", pref:"chiba",
@@ -1368,7 +1530,7 @@ const PRESET_SPOTS = [
     memo:"幕張新都心近くの海浜エリア。マリンスポーツが盛んで砂浜の利用者も多い。",
     tips:"海浜幕張駅から徒歩15分。現地の利用ルールを守ってください。",
     photo:"",
-    preset:true, verified:"confirmed"
+    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
 
 
@@ -1388,41 +1550,41 @@ const PRESET_SPOTS = [
   {
     id:"t17", name:"舎人公園 芝生広場", type:"outdoor", pref:"tokyo",
     lat:35.798663, lng:139.773317, area:"舎人 / 東京",
-    memo:"足立区の広大な公園。芝生が360度広がり遮るものなし。東京北東部の穴場日光浴に適した環境。",
-    tips:"日暮里・舎人ライナー「舎人公園」駅すぐ。夏の日差しは強烈。",
-    photo:"https://upload.wikimedia.org/wikipedia/commons/a/ac/Toneri_Park%2C_Adachi%2C_Tokyo.jpg",
+    memo:"足立区の広大な公園。芝生が広がり開放感がある。東京北東部の日光浴スポット。",
+    tips:"日暮里・舎人ライナー「舎人公園」駅すぐ。現地の利用ルールを守ってください。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Toneri_Park_Adachi_Tokyo.jpg/640px-Toneri_Park_Adachi_Tokyo.jpg",
     preset:true, verified:"unconfirmed"
   },
   {
     id:"t18", name:"水元公園 芝生広場", type:"outdoor", pref:"tokyo",
     lat:35.787845, lng:139.869419, area:"葛飾・水元 / 東京",
-    memo:"葛飾区の大型公園。池と芝生が広がり開放感◎。都内東部の隠れた日光浴スポット。",
-    tips:"金町駅からバス。平日は人が少なくゆったり過ごせる。",
-    photo:"https://upload.wikimedia.org/wikipedia/commons/5/52/Higashi-Mizumoto_Park_%28Higashi-Mizumoto_3-chome%2C_Katsushika%2C_Tokyo%29.jpg",
+    memo:"葛飾区の大型公園。池と芝生が広がり開放感がある。都内東部の日光浴スポット。",
+    tips:"金町駅からバス。公園の利用ルールを守ってください。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Mizumoto_Park_01.jpg/640px-Mizumoto_Park_01.jpg",
     preset:true, verified:"unconfirmed"
   },
   {
     id:"t19", name:"石神井公園 芝生エリア", type:"outdoor", pref:"tokyo",
     lat:35.743845, lng:139.606166, area:"石神井 / 東京",
-    memo:"練馬区の人気公園。池周辺の芝生エリアで日光浴する人が多い。木陰も適度にあり。",
-    tips:"石神井公園駅から徒歩5分。週末は家族連れ多め。",
-    photo:"https://upload.wikimedia.org/wikipedia/commons/c/c3/Shrine_%40_Shakujii_Park_%40_Nerima_%288698009590%29.jpg",
+    memo:"練馬区の人気公園。池周辺の芝生エリアで日光浴する人が多い。木陰も適度にある。",
+    tips:"石神井公園駅から徒歩5分。公園の利用ルールを守ってください。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Shakujii_Park_Nerima_Tokyo.jpg/640px-Shakujii_Park_Nerima_Tokyo.jpg",
     preset:true, verified:"unconfirmed"
   },
   {
     id:"t20", name:"善福寺公園 芝生", type:"outdoor", pref:"tokyo",
     lat:35.716145, lng:139.588834, area:"西荻窪 / 東京",
-    memo:"杉並区の善福寺川沿いの公園。こじんまりした芝生エリアでのんびり焼ける穴場。",
-    tips:"西荻窪駅から徒歩15分。人が少なく静かに過ごせる。",
-    photo:"https://upload.wikimedia.org/wikipedia/commons/a/a0/Zenpukuji_Park_-_Suginami%2C_Tokyo_-_Nov._2019.jpg",
+    memo:"杉並区の善福寺川沿いの公園。芝生エリアで静かに過ごせる穴場。",
+    tips:"西荻窪駅から徒歩15分。公園の利用ルールを守ってください。",
+    photo:"",
     preset:true, verified:"unconfirmed"
   },
   {
     id:"t21", name:"洗足池公園 芝生", type:"outdoor", pref:"tokyo",
     lat:35.602297, lng:139.690605, area:"洗足 / 東京",
-    memo:"大田区の洗足池周辺。池沿いの芝生で日光浴できる都南部の穴場スポット。",
-    tips:"洗足池駅すぐ。釣り人も多く長閑な雰囲気。",
-    photo:"https://upload.wikimedia.org/wikipedia/commons/7/70/Senzoku_hachiman_jinja_ota_tokyo.jpg",
+    memo:"大田区の洗足池周辺。池沿いの芝生で日光浴できる穴場スポット。",
+    tips:"洗足池駅すぐ。釣り人も多く長閑な雰囲気。公園の利用ルールを守ってください。",
+    photo:"",
     preset:true, verified:"unconfirmed"
   },
   {
@@ -1476,9 +1638,9 @@ const PRESET_SPOTS = [
   {
     id:"t28", name:"横十間川親水公園 周辺芝生", type:"outdoor", pref:"tokyo",
     lat:35.674638, lng:139.820191, area:"江東 / 東京",
-    memo:"江東区の親水公園。整備された芝生エリアで下町エリアの日光浴エリア穴場スポット。",
-    tips:"住吉駅から徒歩10分。公園沿いの芝生が広くゆったり過ごせる。",
-    photo:"https://upload.wikimedia.org/wikipedia/commons/c/cd/Canal_%40_Yokojukkengawa_Waterfront_Park_%40_Koto_%2814916861248%29.jpg",
+    memo:"江東区の親水公園。整備された芝生エリアがある下町の穴場スポット。",
+    tips:"住吉駅から徒歩10分。公園の利用ルールを守ってください。",
+    photo:"",
     preset:true, verified:"unconfirmed"
   },
   {
@@ -1616,9 +1778,9 @@ const PRESET_SPOTS = [
   {
     id:"sa9", name:"都幾川河原（ときがわ町）", type:"outdoor", pref:"saitama",
     lat:36.017628, lng:139.30974, area:"ときがわ / 埼玉",
-    memo:"奥武蔵・ときがわ町の清流沿い河原。水辺での日焼けは反射光もあり日光を受けやすい環境。",
-    tips:"東武「武蔵嵐山」駅からバス。夏は川遊び客が多い。遮るものなしの日差しが強いエリア。",
-    photo:"https://upload.wikimedia.org/wikipedia/commons/1/12/Suzumegawa%28Spallow_river%29_in_Tokigawa_Pref._Saitama.jpg",
+    memo:"奥武蔵・ときがわ町の清流沿い河原。夏は川遊び客が多い。",
+    tips:"東武「武蔵嵐山」駅からバス。現地の利用ルールを守ってください。",
+    photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Tokigawa_river.jpg/640px-Tokigawa_river.jpg",
     preset:true, verified:"unconfirmed"
   },
   {
@@ -1789,19 +1951,22 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 // ─────────────────────────────────────────────
 //  ICON
 // ─────────────────────────────────────────────
-function makeIcon(type) {
-  // Carbon: outdoor=#da1e28, salon=#8a3ffc, user=#0f62fe
-  const configs = {
-    outdoor: { color:'#da1e28', emoji:'☀' },
-    salon:   { color:'#8a3ffc', emoji:'✦' },
-    user:    { color:'#0f62fe', emoji:'＋' }
-  };
-  const c = configs[type] || configs.user;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
-    <filter id="sh${type}"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/></filter>
-    <path filter="url(#sh${type})" d="M16 1C8.268 1 2 7.268 2 15c0 9.5 14 24 14 24S30 24.5 30 15C30 7.268 23.732 1 16 1z" fill="${c.color}"/>
-    <circle cx="16" cy="15" r="8" fill="white"/>
-    <text x="16" y="19" text-anchor="middle" font-size="9" font-family="system-ui" fill="${c.color}">${c.emoji}</text>
+// showUnconfirmed: 地図上に未確認ピンを表示するか
+let showUnconfirmed = false;
+
+function makeIcon(spot) {
+  const type = spot.preset ? spot.type : 'user';
+  const isUnconfirmed = spot.preset && spot.verified === 'unconfirmed';
+  // 未確認はグレー、確認済みは通常色
+  const color = isUnconfirmed ? '#8d8d8d' : (type === 'outdoor' ? '#da1e28' : type === 'salon' ? '#8a3ffc' : '#0f62fe');
+  const emoji = type === 'outdoor' ? '☀' : type === 'salon' ? '✦' : '＋';
+  const opacity = isUnconfirmed ? 0.55 : 1;
+  const filterId = `sh${type}${isUnconfirmed ? 'u' : 'c'}`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40" opacity="${opacity}">
+    <filter id="${filterId}"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.2"/></filter>
+    <path filter="url(#${filterId})" d="M16 1C8.268 1 2 7.268 2 15c0 9.5 14 24 14 24S30 24.5 30 15C30 7.268 23.732 1 16 1z" fill="${color}"/>
+    <circle cx="16" cy="15" r="8" fill="white" fill-opacity="${isUnconfirmed ? 0.85 : 1}"/>
+    <text x="16" y="19" text-anchor="middle" font-size="9" font-family="system-ui" fill="${color}">${emoji}</text>
   </svg>`;
   return L.divIcon({ html:svg, className:'', iconSize:[32,40], iconAnchor:[16,40], popupAnchor:[0,-44] });
 }
@@ -1810,53 +1975,65 @@ function makeIcon(type) {
 //  POPUP HTML
 // ─────────────────────────────────────────────
 function buildPopup(spot) {
-  const iconType = spot.preset ? spot.type : 'user';
-  const prefColors = { tokyo:'#da1e28', kanagawa:'#0043ce', saitama:'#198038', chiba:'#f1c21b' };
-  const prefNames  = { tokyo:'東京', kanagawa:'神奈川', saitama:'埼玉', chiba:'千葉' };
-  const badgeColor = iconType === 'outdoor' ? '#da1e28'
-                   : iconType === 'salon'   ? '#8a3ffc'
-                   :                          '#0f62fe';
-  const badgeLabel = iconType === 'outdoor' ? '屋外スポット' : iconType === 'salon' ? '日サロ' : 'マイスポット';
-  const photoSrc = spot.photo || '';
+  const iconType  = spot.preset ? spot.type : 'user';
+  const prefNames = { tokyo:'東京', kanagawa:'神奈川', saitama:'埼玉', chiba:'千葉' };
+  const prefBorderColors = { tokyo:'rgba(218,30,40,0.5)', kanagawa:'rgba(0,67,206,0.5)', saitama:'rgba(25,128,56,0.5)', chiba:'rgba(241,194,27,0.6)' };
+  const badgeClass = iconType === 'outdoor' ? 'popup-badge popup-badge-outdoor' : 'popup-badge popup-badge-user';
+  const badgeLabel = iconType === 'outdoor' ? '屋外スポット' : 'マイスポット';
+  const photoSrc   = spot.photo || '';
+  const topColor   = iconType === 'outdoor' ? '#da1e28' : '#0f62fe';
 
-  // 確認状態バッジ
+  // 確認バッジ
   const isConfirmed = spot.verified === 'confirmed';
-  const verifiedBadge = isConfirmed
-    ? `<span style="background:#198038;color:#fff;font-size:10px;font-weight:400;padding:1px 8px;letter-spacing:0.32px;">✓ 確認済み</span>`
-    : `<span style="background:#6f6f6f;color:#fff;font-size:10px;font-weight:400;padding:1px 8px;letter-spacing:0.32px;">未確認</span>`;
+  const verifiedBadge = spot.preset
+    ? (isConfirmed
+        ? `<span class="popup-badge popup-badge-confirmed">✓ 確認済み</span>`
+        : `<span class="popup-badge popup-badge-unconfirmed">未確認</span>`)
+    : '';
 
+  // 確認メタ情報
+  const verifiedMeta = isConfirmed && spot.verifiedDate
+    ? `<div class="popup-verified-meta">
+        確認状態：公式情報確認済み<br>
+        最終確認：${spot.verifiedDate}<br>
+        確認内容：場所・開園状況<br>
+        情報源：${spot.verifiedBy || '独自調査'}<br>
+        <span class="pvm-muted">※ 上裸での利用可否は現地ルールをご確認ください</span>
+      </div>`
+    : (spot.preset
+        ? `<div class="popup-unconfirmed-note">この情報はまだ現地確認が取れていません。参考情報としてご利用ください。</div>`
+        : '');
+
+  // 写真 or トップバー
   const photoHtml = photoSrc
-    ? `<div style="width:100%;height:140px;overflow:hidden;background:#e0e0e0;">
-         <img src="${photoSrc}" alt="${spot.name}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy"
-           onerror="this.parentElement.style.display='none'" />
-       </div>`
-    : `<div style="width:100%;height:4px;background:${badgeColor};"></div>`;
+    ? `<div class="popup-photo"><img src="${photoSrc}" alt="${spot.name}" loading="lazy" onerror="this.parentElement.innerHTML=''"></div>`
+    : `<div class="popup-topbar" style="background:${topColor};"></div>`;
 
-  const prefBg = prefColors[spot.pref] || '#8d8d8d';
-  const prefTc = spot.pref === 'chiba' ? '#161616' : '#fff';
+  // 都道府県バッジ（カラーボーダーのみ、背景透明）
+  const prefBadge = spot.pref
+    ? `<span class="popup-badge popup-badge-pref" style="border:1px solid ${prefBorderColors[spot.pref]||'rgba(255,255,255,0.2)'};color:rgba(255,255,255,0.55);">${prefNames[spot.pref]||''}</span>`
+    : '';
 
-  // 健康注意書き
-  const healthNote = `<div style="font-size:11px;color:#8d8d8d;background:#f4f4f4;padding:7px 10px;margin-top:8px;line-height:1.5;border-left:2px solid #c6c6c6;">
-    ⚠ 紫外線の過剰な曝露は皮膚・目に影響を与える場合があります。UVケアと水分補給を徹底し、体調に合わせてご利用ください。掲載情報は現地ルール・管理者の案内を優先してください。</div>`;
+  const healthNote = `<div class="popup-health">⚠ 紫外線の過剰な曝露は皮膚・目に影響を与える場合があります。UVケアと水分補給を徹底し、体調に合わせてご利用ください。</div>`;
 
-  return `
-    <div style="font-family:'IBM Plex Sans JP','IBM Plex Sans',system-ui,sans-serif;width:280px;background:#fff;overflow:hidden;">
-      ${photoHtml}
-      <div style="padding:12px 16px 0;border-bottom:1px solid #e0e0e0;padding-bottom:12px;">
-        <div style="font-size:16px;font-weight:600;color:#161616;line-height:1.25;letter-spacing:0;margin-bottom:6px;">${spot.name}</div>
-        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-          <span style="background:${badgeColor};color:#fff;font-size:10px;font-weight:400;padding:1px 8px;letter-spacing:0.32px;">${badgeLabel}</span>
-          ${spot.pref ? `<span style="background:${prefBg};color:${prefTc};font-size:10px;font-weight:400;padding:1px 8px;letter-spacing:0.32px;">${prefNames[spot.pref]||''}</span>` : ''}
-          ${spot.preset ? verifiedBadge : ''}
-        </div>
+  return `<div class="popup-dark">
+    ${photoHtml}
+    <div class="popup-head">
+      <div class="popup-name">${spot.name}</div>
+      <div class="popup-badges">
+        <span class="${badgeClass}">${badgeLabel}</span>
+        ${prefBadge}
+        ${verifiedBadge}
       </div>
-      <div style="padding:12px 16px;">
-        ${spot.area ? `<div style="font-size:11px;color:#8d8d8d;letter-spacing:0.32px;margin-bottom:6px;">${spot.area}</div>` : ''}
-        <div style="font-size:13px;color:#525252;line-height:1.6;margin-bottom:8px;letter-spacing:0.16px;">${spot.memo || ''}</div>
-        ${spot.tips ? `<div style="font-size:12px;color:#0f62fe;background:#edf5ff;padding:8px 12px;border-left:3px solid #0f62fe;line-height:1.5;letter-spacing:0.16px;">${spot.tips}</div>` : ''}
-        ${healthNote}
-      </div>
-    </div>`;
+    </div>
+    <div class="popup-body">
+      ${spot.area ? `<div class="popup-area">${spot.area}</div>` : ''}
+      <div class="popup-memo">${spot.memo || ''}</div>
+      ${spot.tips ? `<div class="popup-tips">${spot.tips}</div>` : ''}
+      ${verifiedMeta}
+      ${healthNote}
+    </div>
+  </div>`;
 }
 
 // ─────────────────────────────────────────────
@@ -1866,8 +2043,7 @@ const markers = {};
 let currentFilter = 'all';
 
 function addMarker(spot) {
-  const iconType = spot.preset ? spot.type : 'user';
-  const marker = L.marker([spot.lat, spot.lng], { icon: makeIcon(iconType) }).addTo(map);
+  const marker = L.marker([spot.lat, spot.lng], { icon: makeIcon(spot) }).addTo(map);
   marker.bindPopup(buildPopup(spot), { maxWidth: 280 });
   marker.spotType = spot.type;
   markers[spot.id] = marker;
@@ -1895,7 +2071,9 @@ function renderAll() {
   all.forEach(spot => {
     const matchType = currentFilter === 'all' || spot.type === currentFilter;
     const matchPref = !['tokyo','kanagawa','saitama','chiba'].includes(currentFilter) || spot.pref === currentFilter;
-    if (matchType && matchPref) {
+    // 未確認ピンはフラグOFFのとき非表示（マイスポットは常に表示）
+    const matchVerified = !spot.preset || spot.verified === 'confirmed' || showUnconfirmed;
+    if (matchType && matchPref && matchVerified) {
       addMarker(spot); count++;
     }
   });
@@ -1924,32 +2102,49 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
 let spotsListFilter = 'all';
 
 function renderSpotsList(filter) {
-  spotsListFilter = filter;
+  if (filter !== undefined) spotsListFilter = filter;
   const all = [...PRESET_SPOTS, ...loadUserSpots()];
   const grid = document.getElementById('spots-grid');
   if (!grid) return;
 
   const filtered = all.filter(spot => {
-    if (filter === 'all') return true;
-    if (filter === 'outdoor' || filter === 'salon') return spot.type === filter;
-    return spot.pref === filter;
+    const f = spotsListFilter;
+    const matchPref = f === 'all' || spot.pref === f;
+    // 未確認スポットはフラグOFFのとき非表示（マイスポットは常に表示）
+    const matchVerified = !spot.preset || spot.verified === 'confirmed' || showUnconfirmed;
+    return matchPref && matchVerified;
   });
 
   const prefNames = { tokyo:'東京', kanagawa:'神奈川', saitama:'埼玉', chiba:'千葉' };
+  const confirmedCount   = filtered.filter(s => s.preset && s.verified === 'confirmed').length;
+  const unconfirmedCount = filtered.filter(s => s.preset && s.verified !== 'confirmed').length;
+  const labelEl = document.getElementById('spots-count-label');
+  if (labelEl) {
+    labelEl.innerHTML = showUnconfirmed
+      ? `<strong>${confirmedCount}</strong> 確認済み &nbsp;+&nbsp; ${unconfirmedCount} 未確認`
+      : `<strong>${confirmedCount}</strong> 件 確認済み`;
+  }
+
   grid.innerHTML = filtered.map(spot => {
     const tagClass = spot.preset ? spot.type : 'user';
-    const tagLabel = tagClass === 'outdoor' ? '☀ 屋外' : tagClass === 'salon' ? '✦ 日サロ' : '投稿';
+    const tagLabel = tagClass === 'outdoor' ? '☀ 屋外' : 'マイスポット';
     const pref = spot.pref ? `<span class="spref">${prefNames[spot.pref] || ''}</span>` : '';
     const img = spot.photo
       ? `<img class="spot-card-img" src="${spot.photo}" alt="${spot.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       : '';
     const placeholder = `<div class="spot-card-placeholder"${spot.photo ? ' style="display:none"' : ''}>☀</div>`;
+    const isUnconfirmed = spot.preset && spot.verified !== 'confirmed';
+    const verifiedLabel = spot.preset
+      ? (isUnconfirmed
+          ? `<span class="vbadge vbadge-unconfirmed">未確認</span>`
+          : `<span class="vbadge vbadge-confirmed">✓ 確認済み</span>`)
+      : '';
     return `
-      <div class="spot-card" onclick="goToSpot(${spot.lat},${spot.lng},'${spot.id}')">
+      <div class="spot-card${isUnconfirmed ? ' spot-card-unconfirmed' : ''}" onclick="goToSpot(${spot.lat},${spot.lng},'${spot.id}')">
         ${img}${placeholder}
         <div class="spot-card-body">
           <div class="spot-card-meta">
-            <span class="stag ${tagClass}">${tagLabel}</span>${pref}
+            <span class="stag ${tagClass}">${tagLabel}</span>${pref}${verifiedLabel}
           </div>
           <div class="spot-card-name">${spot.name}</div>
           <div class="spot-card-memo">${spot.memo || spot.area || ''}</div>
@@ -1958,7 +2153,7 @@ function renderSpotsList(filter) {
       </div>`;
   }).join('');
   if (filtered.length === 0) {
-    grid.innerHTML = `<div style="padding:32px 24px;font-size:13px;color:rgba(255,255,255,0.3);letter-spacing:0.04em;">該当するスポットがありません</div>`;
+    grid.innerHTML = `<div style="padding:40px 24px;text-align:center;font-size:13px;color:rgba(255,255,255,0.25);letter-spacing:0.04em;">該当するスポットがありません</div>`;
   }
 }
 
@@ -1980,6 +2175,16 @@ document.querySelectorAll('.sfbtn').forEach(btn => {
     renderSpotsList(this.dataset.sfilter);
   });
 });
+
+// ── 未確認スイッチ ────────────────────────────────
+const _toggle = document.getElementById('show-unconfirmed-toggle');
+if (_toggle) {
+  _toggle.addEventListener('change', function() {
+    showUnconfirmed = this.checked;
+    renderSpotsList();
+    renderAll();  // 地図ピンも更新
+  });
+}
 
 // ─────────────────────────────────────────────
 //  MAP FILTER (マップタブのフィルターは廃止 → 地図上マーカーはすべて表示)
@@ -2720,6 +2925,31 @@ function buildDaySunData(lat, lng) {
 //     u = R * Xc / (d - Zc)  ← 透視X
 //     v = R * Yc / (d - Zc)  ← 透視Y（上が負）
 //
+function showSunLoading(show) {
+  let el = document.getElementById('sun3d-loading');
+  if (show) {
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'sun3d-loading';
+      el.style.cssText = `
+        position:absolute; inset:0; display:flex; align-items:center;
+        justify-content:center; z-index:8; pointer-events:none;
+        background:rgba(10,21,28,0.55); backdrop-filter:blur(2px);
+        transition:opacity 0.4s ease;
+      `;
+      el.innerHTML = `<span style="font-family:var(--f-jp);font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.08em;">
+        ☀ 太陽軌道を計算中…</span>`;
+      const wrap = document.getElementById('sun3d-wrap');
+      if (wrap) wrap.appendChild(el);
+    }
+    el.style.opacity = '1';
+    el.style.display = 'flex';
+  } else if (el) {
+    el.style.opacity = '0';
+    setTimeout(() => { if (el) el.style.display = 'none'; }, 420);
+  }
+}
+
 function renderSunOverlaySVG(lat, lng) {
   const wrap = document.getElementById('sun3d-wrap');
   if (!wrap) return;
@@ -2735,6 +2965,7 @@ function renderSunOverlaySVG(lat, lng) {
       width:100%; height:100%;
       pointer-events:none; z-index:6;
       overflow:visible;
+      opacity:0; transition:opacity 0.5s ease;
     `;
     wrap.appendChild(svg);
   }
@@ -2928,20 +3159,20 @@ function renderSunOverlaySVG(lat, lng) {
       if (pastPts.length >= 2) {
         const coords = pastPts.map(p => `${p.sc.x.toFixed(1)},${p.sc.y.toFixed(1)}`).join(' ');
         if (isFront) {
-          // 外グロー
+          // 外グロー（細く・薄く）
           inner += `<polyline points="${coords}" fill="none"
-            stroke="rgba(255,120,30,0.25)" stroke-width="18"
+            stroke="rgba(255,120,30,0.12)" stroke-width="9"
             stroke-linecap="round" stroke-linejoin="round"
             filter="url(#traceglow)"/>`;
           // 中グロー
           inner += `<polyline points="${coords}" fill="none"
-            stroke="rgba(255,160,60,0.5)" stroke-width="8"
+            stroke="rgba(255,160,60,0.28)" stroke-width="4"
             stroke-linecap="round" stroke-linejoin="round"/>`;
         }
         // 本線
         inner += `<polyline points="${coords}" fill="none"
-          stroke="${isFront ? '#ffaa44' : 'rgba(255,140,60,0.22)'}"
-          stroke-width="${isFront ? 3.5 : 1.5}"
+          stroke="${isFront ? '#ffaa44' : 'rgba(255,140,60,0.18)'}"
+          stroke-width="${isFront ? 2 : 1}"
           stroke-linecap="round" stroke-linejoin="round"/>`;
       }
 
@@ -2951,12 +3182,12 @@ function renderSunOverlaySVG(lat, lng) {
         if (isFront) {
           // 薄いグロー
           inner += `<polyline points="${coords}" fill="none"
-            stroke="rgba(200,220,255,0.18)" stroke-width="10"
+            stroke="rgba(200,220,255,0.08)" stroke-width="5"
             stroke-linecap="round" stroke-linejoin="round"/>`;
         }
         inner += `<polyline points="${coords}" fill="none"
-          stroke="${isFront ? 'rgba(220,235,255,0.72)' : 'rgba(255,255,255,0.12)'}"
-          stroke-width="${isFront ? 2.5 : 1.2}"
+          stroke="${isFront ? 'rgba(220,235,255,0.5)' : 'rgba(255,255,255,0.08)'}"
+          stroke-width="${isFront ? 1.5 : 0.8}"
           stroke-dasharray="${isFront ? '10 6' : '6 6'}"
           stroke-linecap="round" stroke-linejoin="round"/>`;
       }
@@ -2977,49 +3208,48 @@ function renderSunOverlaySVG(lat, lng) {
 
   for (const { h, sc, isPast } of hourPts) {
     const front  = sc.depth >= 0;
-    const op     = front ? 1 : 0.3;
-    const r      = isPast ? (front ? 5 : 3.5) : (front ? 4 : 2.5);
+    const op     = front ? 1 : 0.25;
+    const r      = isPast ? (front ? 3.5 : 2.5) : (front ? 3 : 2);  // 一回り小さく
     const col    = isPast ? '#ffaa44' : 'rgba(210,230,255,0.85)';
     const colRim = isPast ? '#ff7722' : 'rgba(160,200,255,0.6)';
 
     if (front) {
-      // グロー（前面のみ）
-      inner += `<circle cx="${sc.x.toFixed(1)}" cy="${sc.y.toFixed(1)}" r="${r * 3}"
-        fill="${isPast ? 'rgba(255,150,40,0.18)' : 'rgba(180,210,255,0.12)'}"
+      // グロー（前面のみ・控えめに）
+      inner += `<circle cx="${sc.x.toFixed(1)}" cy="${sc.y.toFixed(1)}" r="${r * 2.5}"
+        fill="${isPast ? 'rgba(255,150,40,0.1)' : 'rgba(180,210,255,0.07)'}"
         opacity="${op}"/>`;
     }
     // リム
-    inner += `<circle cx="${sc.x.toFixed(1)}" cy="${sc.y.toFixed(1)}" r="${r + 2}"
-      fill="none" stroke="${colRim}" stroke-width="${front ? 1.2 : 0.8}"
-      opacity="${op * 0.7}"/>`;
+    inner += `<circle cx="${sc.x.toFixed(1)}" cy="${sc.y.toFixed(1)}" r="${r + 1.5}"
+      fill="none" stroke="${colRim}" stroke-width="${front ? 1 : 0.6}"
+      opacity="${op * 0.6}"/>`;
     // コア
     inner += `<circle cx="${sc.x.toFixed(1)}" cy="${sc.y.toFixed(1)}" r="${r}"
       fill="${col}" opacity="${op}"/>`;
 
-    // 光線（前面かつ偶数時）
+    // 光線（前面のみ）
     if (front && isPast) {
       for (let i = 0; i < 8; i++) {
         const ang = (i * 45) * Math.PI / 180;
-        const x1 = sc.x + (r + 3) * Math.cos(ang);
-        const y1 = sc.y + (r + 3) * Math.sin(ang);
-        const x2 = sc.x + (r + 6 + (i % 2 === 0 ? 2 : 0)) * Math.cos(ang);
-        const y2 = sc.y + (r + 6 + (i % 2 === 0 ? 2 : 0)) * Math.sin(ang);
+        const x1 = sc.x + (r + 2) * Math.cos(ang);
+        const y1 = sc.y + (r + 2) * Math.sin(ang);
+        const x2 = sc.x + (r + 5) * Math.cos(ang);
+        const y2 = sc.y + (r + 5) * Math.sin(ang);
         inner += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}"
           x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
-          stroke="#ffcc66" stroke-width="${i % 2 === 0 ? 1.5 : 1}"
-          stroke-linecap="round" opacity="0.75"/>`;
+          stroke="#ffcc66" stroke-width="${i % 2 === 0 ? 1.2 : 0.8}"
+          stroke-linecap="round" opacity="0.6"/>`;
       }
     } else if (front && !isPast) {
-      // 未来：短い十字線
       for (let i = 0; i < 4; i++) {
         const ang = (i * 90 + 45) * Math.PI / 180;
-        const x1 = sc.x + (r + 3) * Math.cos(ang);
-        const y1 = sc.y + (r + 3) * Math.sin(ang);
-        const x2 = sc.x + (r + 7) * Math.cos(ang);
-        const y2 = sc.y + (r + 7) * Math.sin(ang);
+        const x1 = sc.x + (r + 2) * Math.cos(ang);
+        const y1 = sc.y + (r + 2) * Math.sin(ang);
+        const x2 = sc.x + (r + 5) * Math.cos(ang);
+        const y2 = sc.y + (r + 5) * Math.sin(ang);
         inner += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}"
           x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
-          stroke="rgba(180,210,255,0.55)" stroke-width="1"
+          stroke="rgba(180,210,255,0.4)" stroke-width="0.8"
           stroke-linecap="round"/>`;
       }
     }
@@ -3101,6 +3331,8 @@ function renderSunOverlaySVG(lat, lng) {
   }
 
   svg.innerHTML = inner;
+  requestAnimationFrame(() => { svg.style.opacity = '1'; });
+  showSunLoading(false);
 
   // ── UIインジケーター更新 ─────────────────────────
   const timesEl  = document.getElementById('sun3d-times');
@@ -3242,6 +3474,7 @@ function draw3dSunPath(lat, lng) {
 
 // 天気タブの3D太陽軌道を更新（現在地取得後に呼ばれる）
 function updateWeatherTabSun(lat, lng) {
+  showSunLoading(true);
   sun3dLat = lat;
   sun3dLng = lng;
 
