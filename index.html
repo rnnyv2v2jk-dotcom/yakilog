@@ -2,8 +2,21 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>焼きログ — 関東 日焼けスポットマップ</title>
+  <meta name="description" content="代々木公園・湘南・九十九里など関東エリアの屋外日光浴スポットを地図でまとめて確認。太陽軌道・UV指数・気温をリアルタイム表示。" />
+  <!-- OGP -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://nakamtsu.github.io/yakikatsu-map/" />
+  <meta property="og:title"       content="焼きログ — 関東 日焼けスポットマップ" />
+  <meta property="og:description" content="代々木公園・湘南・九十九里など関東エリアの屋外日光浴スポットを地図でまとめて確認。太陽軌道・UV指数・気温をリアルタイム表示。" />
+  <meta property="og:image"       content="https://nakamtsu.github.io/yakikatsu-map/ogp.png" />
+  <meta property="og:locale"      content="ja_JP" />
+  <meta name="twitter:card"       content="summary_large_image" />
+  <meta name="twitter:title"      content="焼きログ — 関東 日焼けスポットマップ" />
+  <meta name="twitter:description" content="代々木公園・湘南・九十九里など関東エリアの屋外日光浴スポットを地図でまとめて確認。" />
+  <meta name="twitter:image"      content="https://nakamtsu.github.io/yakikatsu-map/ogp.png" />
+  <link rel="canonical"           href="https://nakamtsu.github.io/yakikatsu-map/" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -843,7 +856,46 @@
     .popup-badge-user    { background: rgba(15,98,254,0.15); color: #78a9ff; border: 1px solid rgba(15,98,254,0.3); }
     .popup-badge-pref    { font-size: 10px; font-weight: 400; padding: 2px 8px; border-radius: 3px; letter-spacing: 0.02em; }
     .popup-badge-confirmed   { background: rgba(66,190,101,0.12); color: #42be65; border: 1px solid rgba(66,190,101,0.28); }
+    .popup-badge-facility    { background: rgba(74,168,216,0.1); color: #78a9ff; border: 1px solid rgba(74,168,216,0.28); }
     .popup-badge-unconfirmed { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.38); border: 1px solid rgba(255,255,255,0.12); }
+    .popup-actions {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 4px 0 6px;
+    }
+    .popup-official-link {
+      display: inline-flex; align-items: center;
+      font-size: 11px; font-weight: 500;
+      color: var(--kcc-coral); text-decoration: none;
+      border: 1px solid rgba(255,107,59,0.35);
+      background: rgba(255,107,59,0.06);
+      padding: 5px 12px; border-radius: var(--radius-sm);
+      letter-spacing: 0.03em;
+      transition: all var(--t-base) var(--ease-out-quart);
+    }
+    .popup-official-link:hover {
+      background: rgba(255,107,59,0.12);
+      border-color: rgba(255,107,59,0.6);
+    }
+    .popup-share-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 400;
+      color: rgba(255,255,255,0.4);
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      padding: 5px 12px; border-radius: var(--radius-sm);
+      cursor: pointer; letter-spacing: 0.03em; font-family: var(--f-jp);
+      transition: all var(--t-base) var(--ease-out-quart);
+    }
+    .popup-share-btn:hover {
+      color: var(--kcc-white); background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.2);
+    }
+    /* vbadge-facility */
+    .vbadge-facility {
+      color: #78a9ff;
+      background: rgba(74,168,216,0.1);
+      border: 1px solid rgba(74,168,216,0.28);
+    }
     .popup-body { padding: 12px 16px 4px; }
     .popup-area {
       font-size: 11px; color: rgba(255,255,255,0.35);
@@ -1238,7 +1290,8 @@ const PRESET_SPOTS = [
     memo:"都内最大級の芝生エリア。開放的で日光浴する人も多い。週末は賑わうが広いので場所は確保しやすい。",
     tips:"UVケアと水分補給を忘れずに。公園ルールを守って利用してください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/7/7b/Shinjuku_Gyoen_National_Garden_and_NTT_DoCoMo_Yoyogi_Building%2C_Tokyo%2C_Japan.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.tokyo-park.or.jp/park/yoyogi/"
   },
   {
     id:"t2", name:"お台場海浜公園 砂浜", type:"outdoor", pref:"tokyo",
@@ -1246,7 +1299,8 @@ const PRESET_SPOTS = [
     memo:"東京湾を望む砂浜。夏はビーチ気分で日光浴が楽しめる都内屈指のスポット。",
     tips:"潮風あり。塩分対策も忘れずに。夕方は観覧車バックに映える。現地の利用ルールを確認してください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/3/38/Odaiba_beach_at_dusk.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.tptc.co.jp/park/03_01"
   },
   {
     id:"t3", name:"駒沢オリンピック公園 芝生広場", type:"outdoor", pref:"tokyo",
@@ -1254,7 +1308,8 @@ const PRESET_SPOTS = [
     memo:"広大な芝生。ランナー・スポーツ勢が多く開放的な雰囲気。日光浴している人も見かける。",
     tips:"木陰も多い。駐車場あり。現地の利用ルールを守って利用してください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/3/3c/Komazawa_olympic_park.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.tokyo-park.or.jp/park/komazawa/"
   },
   {
     id:"t4", name:"昭和記念公園（立川）", type:"outdoor", pref:"tokyo",
@@ -1262,7 +1317,8 @@ const PRESET_SPOTS = [
     memo:"国営公園の広大な芝生エリア。日光浴に適したスペースが豊富。",
     tips:"入場料あり（450円）。公園の利用ルールを事前に確認してください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/a/ac/Showa_Kinen_Park_%40_Tachikawa_%2810605769005%29.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.showakinen-koen.jp/"
   },
   {
     id:"t5", name:"葛西臨海公園 海辺エリア", type:"outdoor", pref:"tokyo",
@@ -1270,7 +1326,8 @@ const PRESET_SPOTS = [
     memo:"東京東部の海浜公園。砂浜と芝生が広がり開放感がある。BBQエリアもあり一日過ごせる。",
     tips:"都心からアクセス良好。夏場は混む。公園の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/f/f2/Kasai-Rinkai-Park_View_Plaza_Rest_House.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.tokyo-park.or.jp/park/kasairinkaipark/"
   },
   {
     id:"t6", name:"多摩川河川敷（二子玉川）", type:"outdoor", pref:"tokyo",
@@ -1278,7 +1335,7 @@ const PRESET_SPOTS = [
     memo:"二子玉川駅近くの河川敷。芝生・砂地が広がり開放感がある。",
     tips:"週末はBBQ利用者も多く賑やか。河川敷の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/c/c5/Futako_tamagawa_river_2007_%281112853910%29.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"t7", name:"江戸川河川敷（篠崎・小岩）", type:"outdoor", pref:"tokyo",
@@ -1310,7 +1367,8 @@ const PRESET_SPOTS = [
     memo:"世田谷の広大な公園。芝生が美しく日光浴に適した環境。",
     tips:"用賀駅から徒歩15分。美術館も隣接。売店あり。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/8/8b/Kinuta_Park_04.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.tokyo-park.or.jp/park/kinuta/"
   },
   {
     id:"t11", name:"東京港野鳥公園 芝生エリア", type:"outdoor", pref:"tokyo",
@@ -1326,7 +1384,8 @@ const PRESET_SPOTS = [
     memo:"練馬区の広大な公園。芝生エリアが広く日光浴に適している。",
     tips:"光が丘駅から徒歩5分。売店・トイレ完備。公園の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/2/24/Nerima_Municipal_Hikarigaoka_Library_2024-04-29.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.tokyo-park.or.jp/park/hikarigaoka/"
   },
   {
     id:"t13", name:"木場公園周辺芝生", type:"outdoor", pref:"tokyo",
@@ -1342,7 +1401,8 @@ const PRESET_SPOTS = [
     memo:"吉祥寺の人気公園。池周辺の芝生で日光浴する人が多い。",
     tips:"週末は混む。公園の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/0/08/Inokashira_park_spring.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.tokyo-park.or.jp/park/inokashira/"
   },
   {
     id:"t15", name:"城南島海浜公園 砂浜", type:"outdoor", pref:"tokyo",
@@ -1350,7 +1410,8 @@ const PRESET_SPOTS = [
     memo:"羽田空港近くの砂浜。飛行機を眺めながら砂浜で過ごせる。",
     tips:"夏場は海水浴客でにぎわう。BBQ施設あり。公園の利用ルールを確認してください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/3/35/Marine_Park_%40_Jonanjima_%40_Ota_City_%2810354217155%29.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.city.ota.tokyo.jp/shisetsu/kouen/jounanejima.html"
   },
 
   // ════════════════════════════════
@@ -1362,7 +1423,8 @@ const PRESET_SPOTS = [
     memo:"鎌倉を代表するビーチ。砂浜が広く日光浴に適した環境。",
     tips:"夏季は海の家がオープン。ライフセーバー常駐。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/2/27/Kamakura_Yuigahama_beach_during_winter_with_strong_wind.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.kamakura-info.jp/spot/yuigahama/"
   },
   {
     id:"k2", name:"江の島 表浜（片瀬東浜）", type:"outdoor", pref:"kanagawa",
@@ -1370,7 +1432,8 @@ const PRESET_SPOTS = [
     memo:"湘南を代表するビーチ。広大な砂浜でサーファーや日光浴の利用者が多い。",
     tips:"駐車場あり。夏は混雑する。海の家でシャワーも利用可。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/0/0b/Fujisawa_as_seen_from_Enoshima_Island_130809_7.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://katasebeach.com/"
   },
   {
     id:"k3", name:"逗子海岸", type:"outdoor", pref:"kanagawa",
@@ -1378,7 +1441,8 @@ const PRESET_SPOTS = [
     memo:"逗子の落ち着いたビーチ。比較的混雑が少なく大人な雰囲気。",
     tips:"逗子駅から徒歩15分またはバス。海の家あり。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/3/3e/Zushi_Kaigan_1930s.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.zushi-city.jp/kanko/beach/zushikaigan.html"
   },
   {
     id:"k4", name:"葉山 一色海岸", type:"outdoor", pref:"kanagawa",
@@ -1386,7 +1450,7 @@ const PRESET_SPOTS = [
     memo:"葉山の海岸。透明度が高く落ち着いた雰囲気。",
     tips:"駐車場が少ないので早めに到着を。シュノーケリングも楽しめる。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/8/87/Sunset_and_Mt.Fuji_from_Hayama_%E8%91%89%E5%B1%B1_beach_-_panoramio.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"k5", name:"茅ヶ崎海岸（サザンビーチ）", type:"outdoor", pref:"kanagawa",
@@ -1394,7 +1458,8 @@ const PRESET_SPOTS = [
     memo:"広大な砂浜が続く湘南の海岸。サーファーや日光浴の利用者が多い。",
     tips:"夏はフードブースも充実。茅ヶ崎駅から徒歩15分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/c/c2/Southern_Beach_Chigasaki_Monument.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.city.chigasaki.kanagawa.jp/kanko/1004272.html"
   },
   {
     id:"k6", name:"平塚海岸", type:"outdoor", pref:"kanagawa",
@@ -1402,7 +1467,7 @@ const PRESET_SPOTS = [
     memo:"比較的すいている穴場ビーチ。広大な砂浜でゆったり過ごせる。",
     tips:"平塚駅からバスで15分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/e/e9/Sun_shining_sea_-_panoramio.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"k7", name:"大磯海水浴場", type:"outdoor", pref:"kanagawa",
@@ -1410,7 +1475,8 @@ const PRESET_SPOTS = [
     memo:"日本最古の海水浴場のひとつ。レトロな雰囲気と広い砂浜が魅力。",
     tips:"大磯駅から徒歩10分。海の家あり。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/e/e1/Oiso_beach_-_alt_-_Kanagawa_-_2023_July_9_various_15_00_36_446000.jpeg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.town.oiso.kanagawa.jp/oisomachi/kanko/beach/index.html"
   },
   {
     id:"k8", name:"横浜・本牧海づり施設付近の芝生", type:"outdoor", pref:"kanagawa",
@@ -1426,7 +1492,8 @@ const PRESET_SPOTS = [
     memo:"三浦半島南端のビーチ。砂浜が広く透明度も高い。",
     tips:"京急「三浦海岸」駅から徒歩5分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/d/d2/Miura_Beach_01.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.miura-info.ne.jp/play/beach/miurakaigan/"
   },
 
   // ════════════════════════════════
@@ -1438,7 +1505,8 @@ const PRESET_SPOTS = [
     memo:"荒川沿いの広大な公園。芝生が広く日光浴する人が多い。",
     tips:"駐車場無料。売店・BBQエリアあり。公園の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/8/8c/Saiko_%C2%B7_Doman_Green_Park_1.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.saitama-doukan.jp/spot/saiko-doman-green-park/"
   },
   {
     id:"sa2", name:"荒川河川敷（熊谷）", type:"outdoor", pref:"saitama",
@@ -1446,7 +1514,7 @@ const PRESET_SPOTS = [
     memo:"熊谷の荒川河川敷。広大な河川敷で遮るものが少ない。",
     tips:"夏は気温が高いため、こまめな水分補給・休憩が必要です。河川敷の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/4/49/251128_Kumagaya_Arakawa_Ryokuchi_15.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
   },
   {
     id:"sa3", name:"国営武蔵丘陵森林公園 芝生広場", type:"outdoor", pref:"saitama",
@@ -1454,7 +1522,8 @@ const PRESET_SPOTS = [
     memo:"国営公園の広大な芝生エリア。木陰も多く休憩しやすい環境。",
     tips:"入場料あり（450円）。広大なので自転車レンタルがオススメ。公園の利用ルールを守ってください。",
     photo:"",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.shinrin-koen.go.jp/"
   },
   {
     id:"sa4", name:"見沼代親水公園・芝生エリア", type:"outdoor", pref:"saitama",
@@ -1478,7 +1547,8 @@ const PRESET_SPOTS = [
     memo:"秩父・長瀞の荒川沿いの岩畳・河原。夏は水遊び客で賑わう。",
     tips:"ライン下りと合わせて楽しめる。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/e/ea/Arakawa_River_from_Takasago_Bridge_in_Nagatoro%2C_Saitama_3.png",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.nagatoro.gr.jp/"
   },
 
   // ════════════════════════════════
@@ -1490,7 +1560,8 @@ const PRESET_SPOTS = [
     memo:"東京湾沿いの海浜公園。砂浜が整備されており日光浴しやすい環境。",
     tips:"稲毛海岸駅から徒歩15分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/c/cf/Chiba_beach.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.city.chiba.lg.jp/kouen/park/inagekaihinkoen.html"
   },
   {
     id:"c2", name:"九十九里浜（片貝海水浴場）", type:"outdoor", pref:"chiba",
@@ -1498,7 +1569,8 @@ const PRESET_SPOTS = [
     memo:"全長約66kmの九十九里浜。広大な砂浜が続き、サーファーも多い人気の海岸。",
     tips:"東京から車で1.5〜2時間。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/c/cb/Kujukuri_be%EF%B8%8F%EF%B8%8F%EF%B8%8Fach_9.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.kujukuri.com/"
   },
   {
     id:"c3", name:"勝浦海水浴場", type:"outdoor", pref:"chiba",
@@ -1506,7 +1578,8 @@ const PRESET_SPOTS = [
     memo:"外房エリアの人気ビーチ。透明度が高く砂浜も広い。",
     tips:"勝浦駅から徒歩10分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/2/2d/Moriya_Beach%2C_Katsuura_-Aug._2010_a.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.city.katsuura.lg.jp/kankou/kaisuiyokujo"
   },
   {
     id:"c4", name:"御宿海水浴場", type:"outdoor", pref:"chiba",
@@ -1514,7 +1587,8 @@ const PRESET_SPOTS = [
     memo:"外房の美しいビーチ。白い砂と青い海が広がる。混雑が少なくゆったりと過ごせる。",
     tips:"御宿駅から徒歩15分。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/6/6d/Beach_at_Onjuku%2C_Chiba_prefecture_Wikivoyage_banner.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.town.onjuku.chiba.jp/kankou/kaisuiyokujo/"
   },
   {
     id:"c6", name:"館山海水浴場（北条海岸）", type:"outdoor", pref:"chiba",
@@ -1522,7 +1596,8 @@ const PRESET_SPOTS = [
     memo:"南房総の館山ビーチ。関東南部のロケーションで水温が高い。",
     tips:"東京から館山道で約2時間。現地の利用ルールを守ってください。",
     photo:"https://upload.wikimedia.org/wikipedia/commons/b/b7/%E5%8C%97%E6%9D%A1%E6%B5%B7%E5%B2%B8.jpg",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.tateyama-city.jp/kanko/kanko/kaisuiyokujo.html"
   },
   {
     id:"c7", name:"検見川浜（幕張エリア海岸）", type:"outdoor", pref:"chiba",
@@ -1530,7 +1605,8 @@ const PRESET_SPOTS = [
     memo:"幕張新都心近くの海浜エリア。マリンスポーツが盛んで砂浜の利用者も多い。",
     tips:"海浜幕張駅から徒歩15分。現地の利用ルールを守ってください。",
     photo:"",
-    preset:true, verified:"confirmed", verifiedDate:"2025-06", verifiedBy:"公式情報確認"
+    preset:true, verified:"facility_only", verifiedDate:"2025-06", verifiedBy:"公式情報確認",
+    officialUrl:"https://www.city.chiba.lg.jp/kouen/park/kemikawahamapark.html"
   },
 
 
@@ -1954,9 +2030,14 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 // showUnconfirmed: 地図上に未確認ピンを表示するか
 let showUnconfirmed = false;
 
+// verified が 'unconfirmed' かどうかを判定するヘルパー
+function isUnverified(spot) {
+  return spot.preset && spot.verified === 'unconfirmed';
+}
+
 function makeIcon(spot) {
   const type = spot.preset ? spot.type : 'user';
-  const isUnconfirmed = spot.preset && spot.verified === 'unconfirmed';
+  const isUnconfirmed = isUnverified(spot);
   // 未確認はグレー、確認済みは通常色
   const color = isUnconfirmed ? '#8d8d8d' : (type === 'outdoor' ? '#da1e28' : type === 'salon' ? '#8a3ffc' : '#0f62fe');
   const emoji = type === 'outdoor' ? '☀' : type === 'salon' ? '✦' : '＋';
@@ -1974,6 +2055,13 @@ function makeIcon(spot) {
 // ─────────────────────────────────────────────
 //  POPUP HTML
 // ─────────────────────────────────────────────
+// verified 値のラベル・クラスを返すヘルパー
+function verifiedLabel(v) {
+  if (v === 'facility_only') return { label:'施設情報確認', cls:'popup-badge-facility', vbadgeCls:'vbadge-facility' };
+  if (v === 'confirmed_site') return { label:'日光浴利用確認', cls:'popup-badge-confirmed', vbadgeCls:'vbadge-confirmed' };
+  return { label:'未確認候補', cls:'popup-badge-unconfirmed', vbadgeCls:'vbadge-unconfirmed' };
+}
+
 function buildPopup(spot) {
   const iconType  = spot.preset ? spot.type : 'user';
   const prefNames = { tokyo:'東京', kanagawa:'神奈川', saitama:'埼玉', chiba:'千葉' };
@@ -1984,32 +2072,42 @@ function buildPopup(spot) {
   const topColor   = iconType === 'outdoor' ? '#da1e28' : '#0f62fe';
 
   // 確認バッジ
-  const isConfirmed = spot.verified === 'confirmed';
-  const verifiedBadge = spot.preset
-    ? (isConfirmed
-        ? `<span class="popup-badge popup-badge-confirmed">✓ 確認済み</span>`
-        : `<span class="popup-badge popup-badge-unconfirmed">未確認</span>`)
+  const vInfo = spot.preset ? verifiedLabel(spot.verified) : null;
+  const vBadge = vInfo
+    ? `<span class="popup-badge ${vInfo.cls}">${vInfo.label}</span>`
     : '';
 
   // 確認メタ情報
-  const verifiedMeta = isConfirmed && spot.verifiedDate
-    ? `<div class="popup-verified-meta">
-        確認状態：公式情報確認済み<br>
-        最終確認：${spot.verifiedDate}<br>
-        確認内容：場所・開園状況<br>
-        情報源：${spot.verifiedBy || '独自調査'}<br>
-        <span class="pvm-muted">※ 上裸での利用可否は現地ルールをご確認ください</span>
-      </div>`
-    : (spot.preset
-        ? `<div class="popup-unconfirmed-note">この情報はまだ現地確認が取れていません。参考情報としてご利用ください。</div>`
-        : '');
+  let vMeta = '';
+  if (spot.preset && spot.verified === 'facility_only' && spot.verifiedDate) {
+    vMeta = `<div class="popup-verified-meta">
+      確認内容：施設の存在・開園状況（日光浴利用の可否は未確認）<br>
+      最終確認：${spot.verifiedDate} ／ ${spot.verifiedBy || '独自調査'}<br>
+      <span class="pvm-muted">※ 上裸での利用可否は現地ルールをご確認ください</span>
+    </div>`;
+  } else if (spot.preset && spot.verified === 'confirmed_site' && spot.verifiedDate) {
+    vMeta = `<div class="popup-verified-meta">
+      確認内容：日光浴での利用を確認済み<br>
+      最終確認：${spot.verifiedDate} ／ ${spot.verifiedBy || '独自調査'}
+    </div>`;
+  } else if (spot.preset) {
+    vMeta = `<div class="popup-unconfirmed-note">この情報はまだ現地確認が取れていません。参考情報としてご利用ください。</div>`;
+  }
+
+  // 公式サイトリンク
+  const officialLink = spot.officialUrl
+    ? `<a class="popup-official-link" href="${spot.officialUrl}" target="_blank" rel="noopener noreferrer">公式サイトを見る →</a>`
+    : '';
+
+  // 共有リンク
+  const shareLink = `<button class="popup-share-btn" onclick="shareSpot('${spot.id}','${spot.name.replace(/'/g,'')}')">このスポットを共有</button>`;
 
   // 写真 or トップバー
   const photoHtml = photoSrc
     ? `<div class="popup-photo"><img src="${photoSrc}" alt="${spot.name}" loading="lazy" onerror="this.parentElement.innerHTML=''"></div>`
     : `<div class="popup-topbar" style="background:${topColor};"></div>`;
 
-  // 都道府県バッジ（カラーボーダーのみ、背景透明）
+  // 都道府県バッジ
   const prefBadge = spot.pref
     ? `<span class="popup-badge popup-badge-pref" style="border:1px solid ${prefBorderColors[spot.pref]||'rgba(255,255,255,0.2)'};color:rgba(255,255,255,0.55);">${prefNames[spot.pref]||''}</span>`
     : '';
@@ -2023,15 +2121,19 @@ function buildPopup(spot) {
       <div class="popup-badges">
         <span class="${badgeClass}">${badgeLabel}</span>
         ${prefBadge}
-        ${verifiedBadge}
+        ${vBadge}
       </div>
     </div>
     <div class="popup-body">
       ${spot.area ? `<div class="popup-area">${spot.area}</div>` : ''}
       <div class="popup-memo">${spot.memo || ''}</div>
       ${spot.tips ? `<div class="popup-tips">${spot.tips}</div>` : ''}
-      ${verifiedMeta}
+      ${vMeta}
       ${healthNote}
+      <div class="popup-actions">
+        ${officialLink}
+        ${spot.preset || spot.id ? shareLink : ''}
+      </div>
     </div>
   </div>`;
 }
@@ -2072,7 +2174,7 @@ function renderAll() {
     const matchType = currentFilter === 'all' || spot.type === currentFilter;
     const matchPref = !['tokyo','kanagawa','saitama','chiba'].includes(currentFilter) || spot.pref === currentFilter;
     // 未確認ピンはフラグOFFのとき非表示（マイスポットは常に表示）
-    const matchVerified = !spot.preset || spot.verified === 'confirmed' || showUnconfirmed;
+    const matchVerified = !spot.preset || spot.verified !== 'unconfirmed' || showUnconfirmed;
     if (matchType && matchPref && matchVerified) {
       addMarker(spot); count++;
     }
@@ -2111,18 +2213,18 @@ function renderSpotsList(filter) {
     const f = spotsListFilter;
     const matchPref = f === 'all' || spot.pref === f;
     // 未確認スポットはフラグOFFのとき非表示（マイスポットは常に表示）
-    const matchVerified = !spot.preset || spot.verified === 'confirmed' || showUnconfirmed;
+    const matchVerified = !spot.preset || spot.verified !== 'unconfirmed' || showUnconfirmed;
     return matchPref && matchVerified;
   });
 
   const prefNames = { tokyo:'東京', kanagawa:'神奈川', saitama:'埼玉', chiba:'千葉' };
-  const confirmedCount   = filtered.filter(s => s.preset && s.verified === 'confirmed').length;
-  const unconfirmedCount = filtered.filter(s => s.preset && s.verified !== 'confirmed').length;
+  const shownCount   = filtered.filter(s => s.preset).length;
+  const unconfCount  = filtered.filter(s => s.preset && s.verified === 'unconfirmed').length;
   const labelEl = document.getElementById('spots-count-label');
   if (labelEl) {
     labelEl.innerHTML = showUnconfirmed
-      ? `<strong>${confirmedCount}</strong> 確認済み &nbsp;+&nbsp; ${unconfirmedCount} 未確認`
-      : `<strong>${confirmedCount}</strong> 件 確認済み`;
+      ? `<strong>${shownCount}</strong> 件表示中（うち未確認候補 ${unconfCount} 件）`
+      : `<strong>${shownCount}</strong> 件 表示中`;
   }
 
   grid.innerHTML = filtered.map(spot => {
@@ -2133,18 +2235,24 @@ function renderSpotsList(filter) {
       ? `<img class="spot-card-img" src="${spot.photo}" alt="${spot.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       : '';
     const placeholder = `<div class="spot-card-placeholder"${spot.photo ? ' style="display:none"' : ''}>☀</div>`;
-    const isUnconfirmed = spot.preset && spot.verified !== 'confirmed';
-    const verifiedLabel = spot.preset
-      ? (isUnconfirmed
-          ? `<span class="vbadge vbadge-unconfirmed">未確認</span>`
-          : `<span class="vbadge vbadge-confirmed">✓ 確認済み</span>`)
-      : '';
+    const isUnconfirmed = isUnverified(spot);
+    // verified バッジ（3段階）
+    let vLabel = '';
+    if (spot.preset) {
+      if (spot.verified === 'unconfirmed') {
+        vLabel = `<span class="vbadge vbadge-unconfirmed">未確認候補</span>`;
+      } else if (spot.verified === 'facility_only') {
+        vLabel = `<span class="vbadge vbadge-facility">施設情報確認</span>`;
+      } else if (spot.verified === 'confirmed_site') {
+        vLabel = `<span class="vbadge vbadge-confirmed">日光浴利用確認</span>`;
+      }
+    }
     return `
       <div class="spot-card${isUnconfirmed ? ' spot-card-unconfirmed' : ''}" onclick="goToSpot(${spot.lat},${spot.lng},'${spot.id}')">
         ${img}${placeholder}
         <div class="spot-card-body">
           <div class="spot-card-meta">
-            <span class="stag ${tagClass}">${tagLabel}</span>${pref}${verifiedLabel}
+            <span class="stag ${tagClass}">${tagLabel}</span>${pref}${vLabel}
           </div>
           <div class="spot-card-name">${spot.name}</div>
           <div class="spot-card-memo">${spot.memo || spot.area || ''}</div>
@@ -2166,6 +2274,67 @@ function goToSpot(lat, lng, id) {
   map.setView([lat, lng], 15);
   setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, 300);
 }
+
+// ─────────────────────────────────────────────
+//  SHARE / DEEP LINK
+// ─────────────────────────────────────────────
+function shareSpot(id, name) {
+  const url = `${location.origin}${location.pathname}?spot=${id}`;
+  if (navigator.share) {
+    navigator.share({ title:`焼きログ — ${name}`, text:`日光浴スポット「${name}」を見つけました`, url })
+      .catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('URLをコピーしました');
+    }).catch(() => { showToast('コピーできませんでした'); });
+  } else {
+    prompt('このURLをコピーしてシェアしてください', url);
+  }
+}
+
+function showToast(msg) {
+  let t = document.getElementById('yakilog-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'yakilog-toast';
+    t.style.cssText = `
+      position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(12px);
+      background:rgba(10,21,28,0.92); backdrop-filter:blur(10px);
+      border:1px solid rgba(255,255,255,0.12); border-radius:20px;
+      padding:8px 20px; font-family:var(--f-jp); font-size:12px;
+      color:rgba(255,255,255,0.85); letter-spacing:0.04em;
+      z-index:9999; pointer-events:none; opacity:0;
+      transition:opacity 0.22s, transform 0.22s;
+    `;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(12px)';
+  }, 2200);
+}
+
+// ── ページ読み込み時のディープリンク処理 ──
+(function initDeepLink() {
+  const params = new URLSearchParams(location.search);
+  const spotId = params.get('spot');
+  if (!spotId) return;
+  const spot = PRESET_SPOTS.find(s => s.id === spotId);
+  if (!spot) return;
+  // マップタブを表示してポップアップを開く
+  setTimeout(() => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('.tab-btn[data-tab="map"]').classList.add('active');
+    document.getElementById('panel-map').classList.add('active');
+    map.setView([spot.lat, spot.lng], 15);
+    setTimeout(() => { if (markers[spotId]) markers[spotId].openPopup(); }, 400);
+  }, 600);
+})();
 
 // スポット一覧フィルター
 document.querySelectorAll('.sfbtn').forEach(btn => {
